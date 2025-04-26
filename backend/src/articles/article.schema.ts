@@ -5,8 +5,14 @@ export type ArticleDocument = HydratedDocument<Article>;
 
 @Schema()
 export class Article {
-    @Prop({ required: true })
+  @Prop({ required: true })
   title: string;
+
+  @Prop()
+  volume: string;
+
+  @Prop()
+  journal: string;
 
   @Prop({ required: true })
   isbn: string;
@@ -17,11 +23,20 @@ export class Article {
   @Prop()
   description: string;
 
+  @Prop()
+  DOI: string;
+
+  @Prop()
+  URL: string;
+
   @Prop({ type: Date })
   published_date: Date;
 
   @Prop()
   publisher: string;
+
+  @Prop()
+  submitter: string;
 
   @Prop({ type: Date, default: Date.now })
   updated_date: Date;
@@ -34,6 +49,9 @@ export class Article {
 
   @Prop({ type: Date, default: Date.now })
   moderated_date: Date;
+
+  @Prop()
+  reason_for_decision: string;
 }
 
 export const ArticleSchema = SchemaFactory.createForClass(Article);
