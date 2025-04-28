@@ -12,6 +12,9 @@ export class Article {
   volume: string;
 
   @Prop()
+  number: number;
+
+  @Prop()
   journal: string;
 
   @Prop({ required: true })

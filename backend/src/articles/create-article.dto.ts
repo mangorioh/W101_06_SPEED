@@ -2,6 +2,7 @@ export class CreateBookDto {
   title: string;
   volume: string;
   journal: string;
+  number: number;
   isbn: string;
   author: string;
   description: string;
