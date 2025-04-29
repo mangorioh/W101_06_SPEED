@@ -1,4 +1,4 @@
-export class CreateBookDto {
+export class CreateArticleDto {
   title: string;
   volume: string;
   journal: string;
@@ -13,7 +13,7 @@ export class CreateBookDto {
   submitter: string;
   updated_date: Date;
   status: string;
-  moderatedBy?:string;
+  moderatedBy:string;
   moderated_date: Date;
   reason_for_decision: string;
 }

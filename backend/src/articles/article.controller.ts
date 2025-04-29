@@ -10,32 +10,32 @@ import {
     Put,
     NotFoundException,
   } from '@nestjs/common';
+  
 import { ArticleService } from './article.service';
+import { CreateArticleDto } from './create-article.dto';
+import { UpdateArticleDto } from './update-article.dto';
 
-@Controller('moderation')
-export class ArticleController {
-constructor(private readonly articleService: ArticleService) {}
+@Controller('articles')
+    export class ArticleController {
+        constructor(private readonly articleService: ArticleService) {}
 
-@Get('queue')
-async getQueue() {
-    return this.articleService.findAllPending();
-}
+        @Post()
+        create(@Body() createArticleDto: CreateArticleDto) {
+            return this.articleService.create(createArticleDto);
+        }
 
-@Get('article/:id')
-async getArticle(@Param('id') id: string) {
-    return this.articleService.findOne(id);
-}
+        @Get()
+        findAll() {
+            return this.articleService.findAll();
+        }
 
-@Post('article/:id/decision')
-async moderateArticle(
-    @Param('id') id: string,
-    @Body() body: { decision: 'accept' | 'reject' }
-) {
-    const { decision } = body;
-    if (!['accept', 'reject'].includes(decision)) {
-    throw new NotFoundException(`Invalid decision value: ${decision}`);
+        @Get(':id')
+        findOne(@Param('id') id: string) {
+            return this.articleService.findById(id);
+        }
+
+        @Put(':id')
+        update(@Param('id') id: string, @Body() updateArticleDto: UpdateArticleDto) {
+            return this.articleService.update(id, updateArticleDto);
     }
-
-    return this.articleService.moderate(id, decision);
-}
 }
