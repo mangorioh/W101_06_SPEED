@@ -5,6 +5,7 @@ import { ArticleService } from '../articles/article.service';
 export class ModerationService {
   constructor(private readonly articleService: ArticleService) {}
 
+  //Get all articles with status 'pending'
   async getPendingArticles() {
     const allArticles = await this.articleService.findAll();
     return allArticles.filter(article => article.status === 'pending');
