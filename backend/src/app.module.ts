@@ -4,6 +4,7 @@ import { AppService } from './app.service';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule } from '@nestjs/config';
 import { ArticleModule } from './articles/article.module';
+import { ModerationModule } from './moderation/moderation.module';
 
 let DB = "mongodb+srv://czf8591:JUZvqhumub7AF7q0@cluster0.wlyodt5.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
 
@@ -12,8 +13,10 @@ let DB = "mongodb+srv://czf8591:JUZvqhumub7AF7q0@cluster0.wlyodt5.mongodb.net/?r
     ConfigModule.forRoot(),
     MongooseModule.forRoot(process.env.DB_URI ?? DB), 
     ArticleModule,
+    ModerationModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
+
 export class AppModule {}
