@@ -3,47 +3,65 @@
 import { FormEvent, useState } from "react";
 
 const SubmitArticlePage = () => {
-  const [title, setTitle] = useState("");
-  const [authors, setAuthors] = useState<string[]>([""]);
-  const [journal, setJournal] = useState("");
-  const [pubYear, setPubYear] = useState<number>(0);
-  const [volume, setVolume] = useState("");
-  const [number, setNumber] = useState("");
-  const [pages, setPages] = useState("");
-  const [doi, setDoi] = useState("");
+    //file upload
+    const [file, setFile] = useState<File | null>(null);
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (e.target.files) {
+        setFile(e.target.files[0]);
+      }
+    };
 
-  const submitNewArticle = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+    const handleUpload = async () => {
+        // fill this out later
+    };
 
-    if (!title.trim() || authors.some(a => !a.trim()) || !journal.trim() || !doi.trim()) {
-        alert("Please fill in all required fields: Title, Author(s), Journal, and DOI.");
-        return;
-    }
+    //fields
+    const [title, setTitle] = useState("");
+    const [authors, setAuthors] = useState<string[]>([""]);
+    const [journal, setJournal] = useState("");
+    const [pubYear, setPubYear] = useState<number>(0);
+    const [volume, setVolume] = useState("");
+    const [number, setNumber] = useState("");
+    const [pages, setPages] = useState("");
+    const [doi, setDoi] = useState("");
 
-    console.log(
-      JSON.stringify({
-        title,
-        authors,
-        journal,
-        publication_year: pubYear,
-        volume,
-        number,
-        pages,
-        doi
-      })
-    );
+    const submitNewArticle = async (event: FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+
+        if (!title.trim() || authors.some(a => !a.trim()) || !journal.trim() || !doi.trim()) {
+            alert("Please fill in all required fields: Title, Author(s), Journal, and DOI.");
+            return;
+        }
+
+        console.log(
+        JSON.stringify({
+            title,
+            authors,
+            journal,
+            publication_year: pubYear,
+            volume,
+            number,
+            pages,
+            doi
+        })
+        );
   };
 
   const addAuthor = () => setAuthors([...authors, ""]);
-  const removeAuthor = (index: number) =>
-    setAuthors(authors.filter((_, i) => i !== index));
-  const changeAuthor = (index: number, value: string) =>
-    setAuthors(authors.map((author, i) => (i === index ? value : author)));
+  const removeAuthor = (index: number) => setAuthors(authors.filter((_, i) => i !== index));
+  const changeAuthor = (index: number, value: string) => setAuthors(authors.map((author, i) => (i === index ? value : author)));
 
   return (
     <div className="max-w-2xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-6">Submit New Article</h1>
-      <form onSubmit={submitNewArticle} className="space-y-4">
+        <h1 className="text-2xl font-bold mb-6">Submit New Article</h1>
+
+        <div className="input-group">
+            <input className="button-text" id="file" type="file" accept=".bib" onChange={handleFileChange} />
+            <span className="text-sm">Or enter details manually:</span>
+        </div>
+
+
+        <form onSubmit={submitNewArticle} className="space-y-4">
         <div>
             <label htmlFor="title" className="block font-medium">
                 Title <span className="text-xs">Required</span>
@@ -166,12 +184,12 @@ const SubmitArticlePage = () => {
         </div>
 
         <button
-          type="submit"
-          className="bg-black text-white py-2 px-4 rounded hover:bg-gray-800"
+            type="submit"
+            className="bg-black text-white py-2 px-4 rounded hover:bg-gray-800"
         >
             Submit
         </button>
-      </form>
+        </form>
     </div>
   );
 };
