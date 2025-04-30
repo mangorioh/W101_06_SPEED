@@ -20,7 +20,7 @@ export class ModerationController {
 
   @Get('queue')
   getPendingArticles() {
-    //return "I'm jakeing it";
+    //return "Test for Pending";
     return this.moderationService.getPendingArticles();
   }
 
