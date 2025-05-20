@@ -76,3 +76,21 @@ body {
   border-radius: 4px;
   background-color: #f8d7da;
 }
+
+.search-input {
+  padding: 0.5rem;
+  width: 300px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  margin-right: 1rem;
+}
+
+.no-results {
+  color: #6c757d;
+  margin: 2rem 0;
+  padding: 1rem;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  background-color: #f8f9fa;
+  text-align: center;
+}
