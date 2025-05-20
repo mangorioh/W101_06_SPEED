@@ -1,6 +1,6 @@
 // Kirby Pascua | 22172362
 
-// Added manual year selection
+// Added search query
 
 "use client";
 
@@ -24,6 +24,7 @@ export default function ArticlesPage() {
   const [selectedPractice, setSelectedPractice] = useState<string>("All");
   const [startYear, setStartYear] = useState<string>("");
   const [endYear, setEndYear] = useState<string>("");
+  const [searchQuery, setSearchQuery] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
@@ -56,8 +57,14 @@ export default function ArticlesPage() {
       if (startYear && endYear) {
         matchesYear = pubYear >= parseInt(startYear) && pubYear <= parseInt(endYear);
       }
+
+      const matchesSearch = article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        article.authors.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        article.source.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        article.claim.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        article.evidence.toLowerCase().includes(searchQuery.toLowerCase());
       
-      return matchesPractice && matchesYear;
+      return matchesPractice && matchesYear && matchesSearch;
     })
     .sort((a, b) => sortOrder === "asc" 
       ? parseInt(a.pubyear) - parseInt(b.pubyear)
@@ -79,6 +86,15 @@ export default function ArticlesPage() {
     <div className="container">
       <div className="filters">
         {}
+        <input
+          type="text"
+          placeholder="Search articles..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="search-input"
+        />
+
+        {}
         <select 
           value={selectedPractice} 
           onChange={(e) => setSelectedPractice(e.target.value)}
@@ -89,7 +105,7 @@ export default function ArticlesPage() {
           ))}
         </select>
 
-        {}
+        {
         <div className="year-inputs">
           <input
             type="number"
@@ -120,6 +136,10 @@ export default function ArticlesPage() {
       </div>
 
       {errorMessage && <div className="error-message">{errorMessage}</div>}
+      
+      {filteredData.length === 0 && searchQuery && (
+        <div className="no-results">No articles found matching "{searchQuery}"</div>
+      )}
 
       <SortableTable headers={headers} data={filteredData} />
     </div>
