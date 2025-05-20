@@ -1,5 +1,6 @@
 // Kirby Pascua | 22172362
-// Added "Practice" field for ids. filtering/sorting logic implemented
+
+// Added manual year selection
 
 "use client";
 
@@ -21,27 +22,39 @@ interface ArticlesInterface {
 
 export default function ArticlesPage() {
   const [selectedPractice, setSelectedPractice] = useState<string>("All");
-  const [selectedYearRange, setSelectedYearRange] = useState<string>("All");
+  const [startYear, setStartYear] = useState<string>("");
+  const [endYear, setEndYear] = useState<string>("");
+  const [errorMessage, setErrorMessage] = useState<string>("");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
-  const articles = data.map(article => ({
-    ...article,
-    id: article.id || article._id
-  }));
-  const practices = Array.from(new Set(articles.map(article => article.practice)));
 
-  // Filter and sort logic
-  const filteredData = articles
+  const practices = Array.from(new Set(data.map(article => article.practice)));
+
+  const validateYears = (start: string, end: string): boolean => {
+    const startNum = parseInt(start);
+    const endNum = parseInt(end);
+    
+    if (start && end && startNum > endNum) {
+      setErrorMessage("End year cannot be earlier than start year");
+      return false;
+    }
+    
+    if (startNum < 1900 || endNum > new Date().getFullYear()) {
+      setErrorMessage("Years must be between 1900 and current year");
+      return false;
+    }
+    
+    setErrorMessage("");
+    return true;
+  };
+
+  const filteredData = data
     .filter(article => {
       const matchesPractice = selectedPractice === "All" || article.practice === selectedPractice;
       const pubYear = parseInt(article.pubyear);
       
       let matchesYear = true;
-      if (selectedYearRange === "2015-2020") {
-        matchesYear = pubYear >= 2015 && pubYear <= 2020;
-      } else if (selectedYearRange === "2010-2014") {
-        matchesYear = pubYear >= 2010 && pubYear <= 2014;
-      } else if (selectedYearRange === "2005-2009") {
-        matchesYear = pubYear >= 2005 && pubYear <= 2009;
+      if (startYear && endYear) {
+        matchesYear = pubYear >= parseInt(startYear) && pubYear <= parseInt(endYear);
       }
       
       return matchesPractice && matchesYear;
@@ -65,6 +78,7 @@ export default function ArticlesPage() {
   return (
     <div className="container">
       <div className="filters">
+        {}
         <select 
           value={selectedPractice} 
           onChange={(e) => setSelectedPractice(e.target.value)}
@@ -75,15 +89,27 @@ export default function ArticlesPage() {
           ))}
         </select>
 
-        <select
-          value={selectedYearRange}
-          onChange={(e) => setSelectedYearRange(e.target.value)}
-        >
-          {["All", "2015-2020", "2010-2014", "2005-2009"].map(range => (
-            <option key={range} value={range}>{range}</option>
-          ))}
-        </select>
+        {}
+        <div className="year-inputs">
+          <input
+            type="number"
+            placeholder="Start year"
+            value={startYear}
+            onChange={(e) => setStartYear(e.target.value)}
+            min="1900"
+            max={new Date().getFullYear()}
+          />
+          <input
+            type="number"
+            placeholder="End year"
+            value={endYear}
+            onChange={(e) => setEndYear(e.target.value)}
+            min="1900"
+            max={new Date().getFullYear()}
+          />
+        </div>
 
+        {}
         <select
           value={sortOrder}
           onChange={(e) => setSortOrder(e.target.value as "asc" | "desc")}
@@ -92,6 +118,8 @@ export default function ArticlesPage() {
           <option value="desc">Newest First</option>
         </select>
       </div>
+
+      {errorMessage && <div className="error-message">{errorMessage}</div>}
 
       <SortableTable headers={headers} data={filteredData} />
     </div>
