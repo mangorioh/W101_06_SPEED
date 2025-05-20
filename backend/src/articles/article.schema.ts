@@ -55,6 +55,9 @@ export class Article {
 
   @Prop()
   reason_for_decision: string;
+
+  @Prop()
+  rating: number;
 }
 
 export const ArticleSchema = SchemaFactory.createForClass(Article);
