@@ -105,7 +105,7 @@ export default function ArticlesPage() {
           ))}
         </select>
 
-        {
+        {}
         <div className="year-inputs">
           <input
             type="number"
