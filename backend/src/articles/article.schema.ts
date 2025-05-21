@@ -38,13 +38,16 @@ export class Article {
   @Prop()
   publisher: string;
 
-  @Prop()
+  @Prop({ type: String, default: 'Anonymous' })
   submitter: string;
 
   @Prop({ type: Date, default: Date.now })
   updated_date: Date;
 
-  @Prop({ enum: ['pending', 'under moderation', 'accepted', 'rejected'], default: 'pending' })
+  @Prop({
+    enum: ['pending', 'under moderation', 'accepted', 'rejected'],
+    default: 'pending',
+  })
   status: string;
 
   @Prop()

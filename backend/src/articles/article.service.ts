@@ -7,7 +7,12 @@ import { UpdateArticleDto } from './update-article.dto';
 
 @Injectable()
 export class ArticleService {
-  constructor(@InjectModel(Article.name) private articleModel: Model<Article>) {}
+  reject(id: string, rejectDto: any) {
+    throw new Error('Method not implemented.');
+  }
+  constructor(
+    @InjectModel(Article.name) private articleModel: Model<Article>,
+  ) {}
 
   //Run create DTO
   async create(createArticleDto: CreateArticleDto): Promise<Article> {
@@ -26,7 +31,12 @@ export class ArticleService {
   }
 
   //Run update DTO - FIX LATER
-  async update(id: string, updateArticleDto: UpdateArticleDto): Promise<Article | null> {
-    return this.articleModel.findByIdAndUpdate(id, updateArticleDto, { new: true }).exec();
+  async update(
+    id: string,
+    updateArticleDto: UpdateArticleDto,
+  ): Promise<Article | null> {
+    return this.articleModel
+      .findByIdAndUpdate(id, updateArticleDto, { new: true })
+      .exec();
   }
 }
