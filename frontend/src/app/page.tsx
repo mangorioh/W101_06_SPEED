@@ -39,7 +39,7 @@ export default function ArticlesPage() {
 useEffect(() => {
   const fetchArticles = async () => {
     try {
-      const url = `http://localhost:4000/api/articles${searchQuery ? `?search=${encodeURIComponent(searchQuery)}` : ""}`;
+      const url = `http://localhost:3000/api/articles${searchQuery ? `?search=${encodeURIComponent(searchQuery)}` : ""}`;
       console.log('Fetching from:', url);
       
       const response = await fetch(url);
