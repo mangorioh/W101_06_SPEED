@@ -17,4 +17,6 @@ export class CreateArticleDto {
   moderated_date: Date;
   reason_for_decision: string;
   rating: number;
+  rating_sum: number;
+  rating_count: number;
 }
