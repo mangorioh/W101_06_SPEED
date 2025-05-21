@@ -1,34 +1,105 @@
 // Kirby Pascua | 22172362
-
-// Added search query
-
+// mongodb connection articles
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import SortableTable from "@/components/Table/SortableTable";
-import data from "../utils/dummydata";
+
+// need to redo with proper fields later 
 
 interface ArticlesInterface {
-  id: string;
+  _id: string;
   title: string;
-  authors: string;
-  source: string;
-  pubyear: string;
-  doi: string;
-  claim: string;
-  evidence: string;
-  practice: string;
+  author: string | string[];
+  published_date: string;
+  description?: string;
+  publisher?: string;
+  status?: string;
+  isbn?: string;
+  moderatedBy?: string;
+  rating?: number;
+  reason_for_decision?: string;
+  volume?: string;
+  number?: number;
+  journal?: string;
+  updated_date?: string;
+  moderated_date?: string;
 }
-
 export default function ArticlesPage() {
-  const [selectedPractice, setSelectedPractice] = useState<string>("All");
+  const [articles, setArticles] = useState<ArticlesInterface[]>([]);
+  const [selectedStatus, setSelectedStatus] = useState<string>("All");
   const [startYear, setStartYear] = useState<string>("");
   const [endYear, setEndYear] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState("");
 
-  const practices = Array.from(new Set(data.map(article => article.practice)));
+useEffect(() => {
+  const fetchArticles = async () => {
+    try {
+      const url = `http://localhost:4000/api/articles${searchQuery ? `?search=${encodeURIComponent(searchQuery)}` : ""}`;
+      console.log('Fetching from:', url);
+      
+      const response = await fetch(url);
+      console.log('Response status:', response.status);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Error response:', errorText);
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log('Received data:', data);
+
+const processedData = data.map((article: any) => {
+
+  const formatDate = (dateString: string | { $date: string }) => {
+    try {
+      const dateValue = typeof dateString === 'string' ? dateString : dateString?.$date;
+      return new Date(dateValue).getFullYear().toString();
+    } catch {
+      return 'N/A';
+    }
+  };
+
+  const authorDisplay = Array.isArray(article.author) && article.author.length > 0
+    ? article.author.join(', ')
+    : article.author || 'Anonymous';
+
+  return {
+    ...article,
+    published_date: formatDate(article.published_date),
+    updated_date: formatDate(article.updated_date),
+    moderated_date: formatDate(article.moderated_date),
+    author: authorDisplay,
+    status: article.status || 'Pending',
+    publisher: article.publisher || 'Unknown Publisher',
+    rating: article.rating ?? 'Not rated'
+  };
+});
+      
+      setArticles(processedData);
+      setFetchError("");
+    } catch (error) {
+      console.error('Full error details:', error);
+      setFetchError("Failed to load articles. Please try again later.");
+    } finally {
+      setLoading(false); 
+    }
+  };
+  fetchArticles();
+}, [searchQuery]);
+
+const statusOptions = Array.from(
+  new Set(
+    articles
+      .map(article => article.status)
+      .filter(status => status && status !== 'Unknown')
+  )
+);
 
   const validateYears = (start: string, end: string): boolean => {
     const startNum = parseInt(start);
@@ -48,44 +119,53 @@ export default function ArticlesPage() {
     return true;
   };
 
-  const filteredData = data
-    .filter(article => {
-      const matchesPractice = selectedPractice === "All" || article.practice === selectedPractice;
-      const pubYear = parseInt(article.pubyear);
-      
-      let matchesYear = true;
-      if (startYear && endYear) {
-        matchesYear = pubYear >= parseInt(startYear) && pubYear <= parseInt(endYear);
-      }
+const filteredData = articles
+  .filter(article => {
+    const matchesStatus = selectedStatus === "All" || article.status === selectedStatus;
+    const pubYear = article.published_date ? parseInt(article.published_date) : 0;
+    
+    let matchesYear = true;
+    if (startYear && endYear) {
+      matchesYear = pubYear >= parseInt(startYear) && pubYear <= parseInt(endYear);
+    }
 
-      const matchesSearch = article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        article.authors.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        article.source.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        article.claim.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        article.evidence.toLowerCase().includes(searchQuery.toLowerCase());
+    const authorString = Array.isArray(article.author) 
+      ? article.author.join(", ") 
+      : article.author || "Unknown Author";
       
-      return matchesPractice && matchesYear && matchesSearch;
-    })
-    .sort((a, b) => sortOrder === "asc" 
-      ? parseInt(a.pubyear) - parseInt(b.pubyear)
-      : parseInt(b.pubyear) - parseInt(a.pubyear)
-    );
+    const matchesSearch = article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      authorString.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (article.description && article.description.toLowerCase().includes(searchQuery.toLowerCase()));
 
-  const headers = [
-    { key: "title", label: "Title" },
-    { key: "authors", label: "Authors" },
-    { key: "source", label: "Source" },
-    { key: "pubyear", label: "Publication Year" },
-    { key: "doi", label: "DOI" },
-    { key: "claim", label: "Claim" },
-    { key: "evidence", label: "Evidence" },
-    { key: "practice", label: "SE Practice" }
-  ];
+    return matchesStatus && matchesYear && matchesSearch;
+  })
+  .sort((a, b) => sortOrder === "asc" 
+    ? (parseInt(a.published_date) || 0) - (parseInt(b.published_date) || 0)
+    : (parseInt(b.published_date) || 0) - (parseInt(a.published_date) || 0)
+  );
+
+const headers = [
+  { key: "title", label: "Title" },
+  { key: "author", label: "Author" },
+  { key: "published_date", label: "Year" },
+  { key: "publisher", label: "Publisher" },
+  { key: "status", label: "Status" },
+  { key: "journal", label: "Journal" },
+  { key: "rating", label: "Rating" },
+  { key: "moderatedBy", label: "Moderated By" }
+];
+
+  if (loading) {
+    return <div className="container">Loading articles...</div>;
+  }
+
+  if (fetchError) {
+    return <div className="container error-message">{fetchError}</div>;
+  }
 
   return (
     <div className="container">
       <div className="filters">
-        {}
         <input
           type="text"
           placeholder="Search articles..."
@@ -94,18 +174,16 @@ export default function ArticlesPage() {
           className="search-input"
         />
 
-        {}
         <select 
-          value={selectedPractice} 
-          onChange={(e) => setSelectedPractice(e.target.value)}
+          value={selectedStatus} 
+          onChange={(e) => setSelectedStatus(e.target.value)}
         >
-          <option value="All">All Practices</option>
-          {practices.map(practice => (
-            <option key={practice} value={practice}>{practice}</option>
+          <option value="All">All Statuses</option>
+          {statusOptions.map(status => (
+            <option key={status} value={status}>{status}</option>
           ))}
         </select>
 
-        {}
         <div className="year-inputs">
           <input
             type="number"
@@ -125,7 +203,6 @@ export default function ArticlesPage() {
           />
         </div>
 
-        {}
         <select
           value={sortOrder}
           onChange={(e) => setSortOrder(e.target.value as "asc" | "desc")}
@@ -141,7 +218,13 @@ export default function ArticlesPage() {
         <div className="no-results">No articles found matching "{searchQuery}"</div>
       )}
 
-      <SortableTable headers={headers} data={filteredData} />
+      {filteredData.length === 0 && !searchQuery && (
+        <div className="no-results">No articles found</div>
+      )}
+
+      {filteredData.length > 0 && (
+        <SortableTable headers={headers} data={filteredData} />
+      )}
     </div>
   );
 }
