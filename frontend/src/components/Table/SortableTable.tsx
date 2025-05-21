@@ -5,6 +5,8 @@ interface SortableTableProps {
   data: any[];
 }
 
+
+
 const SortableTable: React.FC<SortableTableProps> = ({ headers, data }) => (
   <table>
     <thead>
@@ -18,12 +20,13 @@ const SortableTable: React.FC<SortableTableProps> = ({ headers, data }) => (
       {data.map((row, i) => (
         <tr key={i}>
           {headers.map((header) => (
-            <td key={header.key}>{row[header.key]}</td>
+          <td key={header.key}>
+            {header.key === 'rating' ? `${row[header.key]}/5` : row[header.key]}
+          </td>
           ))}
         </tr>
       ))}
     </tbody>
   </table>
 );
-
 export default SortableTable;
