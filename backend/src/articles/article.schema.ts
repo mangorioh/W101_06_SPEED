@@ -17,11 +17,11 @@ export class Article {
   @Prop()
   journal: string;
 
-  @Prop({ required: true })
+  @Prop()
   isbn: string;
 
   @Prop({ required: true })
-  author: string;
+  author: string[];
 
   @Prop()
   description: string;

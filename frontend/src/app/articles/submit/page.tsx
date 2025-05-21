@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import bibtexParse from "bibtex-parse-js";
+import { Article } from "@/types/article";
 
 const SubmitArticlePage = () => {
     //file upload
@@ -77,6 +78,23 @@ const SubmitArticlePage = () => {
             doi
         })
         );
+
+        await fetch('http://localhost:3000/articles', { // Your NestJS URL
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            title,
+            authors,
+            journal,
+            publication_year: pubYear,
+            volume,
+            number,
+            pages,
+            doi
+        }),
+      });
   };
 
   const addAuthor = () => setAuthors([...authors, ""]);
