@@ -9,10 +9,12 @@ import {
     Post,
     Put,
     NotFoundException,
+    Patch,
   } from '@nestjs/common';
 
 import { ModerationService } from './moderation.service';
 import { ModerationDecisionDto } from './moderation-decision.dto';
+import { RejectArticleDto } from './reject-article.dto';
 
 @Controller('moderation')
 export class ModerationController {
@@ -22,6 +24,11 @@ export class ModerationController {
   getPendingArticles() {
     //return "Test for Pending";
     return this.moderationService.getPendingArticles();
+  }
+
+  @Get('rejects')
+  getRejectedArticles() {
+    return this.moderationService.getRejectedArticles();
   }
 
   @Post('article/:id/decision')
@@ -34,5 +41,17 @@ export class ModerationController {
       moderationDecisionDto.decision,
       moderationDecisionDto.moderator,
     );
+  }
+
+  @Patch(':id/reject')
+  rejectArticle(
+    @Param('id') id: string,
+    @Body() rejectDto: RejectArticleDto
+  ) {
+    return this.moderationService.rejectArticle(
+      id,
+      rejectDto.rejectionReason,
+      rejectDto.moderator,
+    )
   }
 }

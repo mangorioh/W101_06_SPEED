@@ -17,11 +17,11 @@ export class Article {
   @Prop()
   journal: string;
 
-  @Prop({ required: true })
+  @Prop()
   isbn: string;
 
   @Prop({ required: true })
-  author: string;
+  author: string[];
 
   @Prop()
   description: string;
@@ -44,7 +44,7 @@ export class Article {
   @Prop({ type: Date, default: Date.now })
   updated_date: Date;
 
-  @Prop({ enum: ['pending', 'accepted', 'rejected'], default: 'pending' })
+  @Prop({ enum: ['pending', 'under moderation', 'accepted', 'rejected'], default: 'pending' })
   status: string;
 
   @Prop()
@@ -55,6 +55,9 @@ export class Article {
 
   @Prop()
   reason_for_decision: string;
+
+  @Prop()
+  rating: number;
 }
 
 export const ArticleSchema = SchemaFactory.createForClass(Article);
