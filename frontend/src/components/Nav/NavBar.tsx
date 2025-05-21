@@ -9,6 +9,7 @@ const NavBar = () => {
       </Link>
       <div className="flex">
         <NavComponent href="/" label="Home" />
+        <NavComponent href="/moderation" label="Moderation" />
         <NavComponent label="Articles">
           <NavComponent href="/articles" label="view all articles" />
           <NavComponent href="/articles/submit" label="submit new article" />
