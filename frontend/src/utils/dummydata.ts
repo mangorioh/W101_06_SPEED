@@ -1,9 +1,11 @@
+// Kirby Pascua | 22172362
+// Added "Practice" field to each id
+
 const data = [
     {
         id: "1",
 
-        title:
-            "An experimental evaluation of test driven development vs. test-last development with industry professionals",
+        title: "An experimental evaluation of test driven development vs. test-last development with industry professionals",
 
         authors: "Munir, H., Wnuk, K., Petersen, K., Moayyed, M.",
 
@@ -16,13 +18,13 @@ const data = [
         claim: "code quality improvement",
 
         evidence: "strong support",
+
+        practice: "TDD"
     },
-
     {
-        _id: "2",
+        id: "2",
 
-        title:
-            "An experimental evaluation of test driven development vs. test-last development with industry professionals",
+        title: "An experimental evaluation of test driven development vs. test-last development with industry professionals",
 
         authors: "Munir, H., Wnuk, K., Petersen, K., Moayyed, M.",
 
@@ -35,17 +37,17 @@ const data = [
         claim: "product quality improvement",
 
         evidence: "weak support",
+
+        practice: "TDD"
     },
-
     {
-        _id: "3",
+        id: "3",
 
-        title:
-            "Realizing quality improvement through test driven development: results and experiences of four industrial teams",
+        title: "Realizing quality improvement through test driven development: results and experiences of four industrial teams",
 
         authors: "Nagappan, N., Maximilien, E. M., Bhat, T., Williams, L.",
 
-        source: " Empirical Software Engineering, 13(3), 289–302",
+        source: "Empirical Software Engineering, 13(3), 289–302",
 
         pubyear: "2008",
 
@@ -54,13 +56,13 @@ const data = [
         claim: "product quality improvement",
 
         evidence: "weak support",
+
+        practice: "TDD"
     },
-
     {
-        _id: "4",
+        id: "4",
 
-        title:
-            "Does Test-Driven Development Really Improve Software Design Quality?",
+        title: "Does Test-Driven Development Really Improve Software Design Quality?",
 
         authors: "Janzen, D. S.",
 
@@ -73,13 +75,13 @@ const data = [
         claim: "code quality improvement",
 
         evidence: "strong support",
+
+        practice: "TDD"
     },
-
     {
-        _id: "5",
+        id: "5",
 
-        title:
-            "A Comparative Case Study on the Impact of Test-Driven Development on Program Design and Test Coverage",
+        title: "A Comparative Case Study on the Impact of Test-Driven Development on Program Design and Test Coverage",
 
         authors: "Siniaalto, M., Abrahamsson, P.",
 
@@ -92,6 +94,8 @@ const data = [
         claim: "code quality improvement",
 
         evidence: "weak against",
+
+        practice: "CI/CD"
     },
 ];
 
