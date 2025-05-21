@@ -21,8 +21,9 @@ const RejectArticlePage = () => {
   useEffect(() => {
     const fetchArticles = async () => {
       try {
-        const res = await fetch('/api/articles?status=pending');
+        const res = await fetch('http://localhost:3000/articles');
         const data = await res.json();
+        console.log('Fetched articles:', data);
         setArticles(data);
       } catch (error) {
         console.error('Error fetching articles:', error);
