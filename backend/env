@@ -1,2 +1,0 @@
-JWT_SECRET="IbzPBN3Q2EaYPe0CIbzPBN3Q2EaYPe0C"
-DB_URI="mongodb+srv://testing:IbzPBN3Q2EaYPe0C@testing.3hroxsm.mongodb.net/test?retryWrites=true&w=majority"
