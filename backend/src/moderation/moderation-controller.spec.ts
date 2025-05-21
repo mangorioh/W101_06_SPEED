@@ -3,6 +3,7 @@ import { ModerationController } from './moderation.controller';
 import { ModerationService } from './moderation.service';
 import { RejectArticleDto } from './reject-article.dto';
 import { NotFoundException } from '@nestjs/common';
+import { Validate } from 'class-validator';
 
 describe('ModerationController', () => {
   let controller: ModerationController;
