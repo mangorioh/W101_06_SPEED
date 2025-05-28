@@ -94,3 +94,9 @@ body {
   background-color: #f8f9fa;
   text-align: center;
 }
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+}
