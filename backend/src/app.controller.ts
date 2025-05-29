@@ -3,12 +3,16 @@ import { AppService } from './app.service';
 
 @Controller('api/articles')
 export class AppController {
-  constructor(private readonly appService: AppService) {}
+  constructor(private readonly appService: AppService) { }
 
   @Get()
   async getArticles(@Query('search') search: string) {
-    return search 
+    return search
       ? this.appService.searchArticles(search)
       : this.appService.findAll();
+  }
+  @Get()
+  getHello(): string {
+    return this.appService.getHello();
   }
 }

@@ -5,13 +5,13 @@ import { Article } from './schemas/article.schema';
 
 @Injectable()
 export class AppService {
-  constructor(@InjectModel(Article.name) private articleModel: Model<Article>) {}
+  constructor(@InjectModel(Article.name) private articleModel: Model<Article>) { }
 
-async findAll() {
-  return this.articleModel.find().select(
-    'title author published_date publisher status description isbn moderatedBy rating reason_for_decision volume number journal updated_date moderated_date'
-  ).lean().exec();
-}
+  async findAll() {
+    return this.articleModel.find().select(
+      'title author published_date publisher status description isbn moderatedBy rating reason_for_decision volume number journal updated_date moderated_date'
+    ).lean().exec();
+  }
 
   async searchArticles(query: string) {
     return this.articleModel.find({
@@ -21,6 +21,10 @@ async findAll() {
         { publisher: new RegExp(query, 'i') }
       ]
     }).select('title author published_date publisher status reason_for_decision')
-    .exec();
+      .exec();
+  }
+  getHello(): string {
+    return 'SPEED BACKEND is running...';
   }
 }
+
