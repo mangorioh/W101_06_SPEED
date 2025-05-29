@@ -1,246 +1,172 @@
-// Kirby Pascua | 22172362
-// mongodb connection articles
 "use client";
 
-import { useState, useEffect } from "react";
-import SortableTable from "@/components/Table/SortableTable";
+import { useEffect, useState } from "react";
 
-// need to redo with proper fields later
-
-interface ArticlesInterface {
+interface Article {
   _id: string;
   title: string;
   author: string | string[];
   published_date: string;
+  updated_date?: string;
   description?: string;
   publisher?: string;
-  status?: string;
-  isbn?: string;
-  moderatedBy?: string;
-  rating?: number;
-  reason_for_decision?: string;
-  volume?: string;
-  number?: number;
   journal?: string;
-  updated_date?: string;
-  moderated_date?: string;
 }
-export default function ArticlesPage() {
-  const [articles, setArticles] = useState<ArticlesInterface[]>([]);
-  const [selectedStatus, setSelectedStatus] = useState<string>("All");
-  const [startYear, setStartYear] = useState<string>("");
-  const [endYear, setEndYear] = useState<string>("");
-  const [searchQuery, setSearchQuery] = useState<string>("");
-  const [errorMessage, setErrorMessage] = useState<string>("");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+
+// Hash function to deterministically select an article based on date
+function hashStringToIndex(str: string, max: number): number {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash << 5) - hash + str.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash) % max;
+}
+
+export default function HomePage() {
+  const [randomArticle, setRandomArticle] = useState<Article | null>(null);
+  const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
-  const [fetchError, setFetchError] = useState("");
+  const [error, setError] = useState("");
+
+  // Format utility
+  const formatDate = (dateString: string | { $date: string }): string => {
+    try {
+      const rawDate =
+        typeof dateString === "string" ? dateString : dateString?.$date;
+      return new Date(rawDate).getFullYear().toString();
+    } catch {
+      return "N/A";
+    }
+  };
 
   useEffect(() => {
     const fetchArticles = async () => {
       try {
-        const url = `http://localhost:3000/api/articles${
-          searchQuery ? `?search=${encodeURIComponent(searchQuery)}` : ""
-        }`;
-        console.log("Fetching from:", url);
+        const res = await fetch("http://localhost:3000/api/articles");
+        const data: Article[] = await res.json();
 
-        const response = await fetch(url);
-        console.log("Response status:", response.status);
+        // Format each article
+        const formatted = data.map((article) => ({
+          ...article,
+          author: Array.isArray(article.author)
+            ? article.author.join(", ")
+            : article.author || "Anonymous",
+          published_date: formatDate(article.published_date),
+          updated_date: article.updated_date
+            ? formatDate(article.updated_date)
+            : undefined,
+        }));
 
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error("Error response:", errorText);
-          throw new Error(`HTTP error! status: ${response.status}`);
+        setArticles(formatted);
+
+        if (formatted.length > 0) {
+          const today = new Date().toISOString().split("T")[0];
+          const index = hashStringToIndex(today, formatted.length);
+          setRandomArticle(formatted[index]);
         }
-
-        const data = await response.json();
-        console.log("Received data:", data);
-
-        const processedData = data.map((article: any) => {
-          const formatDate = (dateString: string | { $date: string }) => {
-            try {
-              const dateValue =
-                typeof dateString === "string" ? dateString : dateString?.$date;
-              return new Date(dateValue).getFullYear().toString();
-            } catch {
-              return "N/A";
-            }
-          };
-
-          const authorDisplay =
-            Array.isArray(article.author) && article.author.length > 0
-              ? article.author.join(", ")
-              : article.author || "Anonymous";
-
-          return {
-            ...article,
-            published_date: formatDate(article.published_date),
-            updated_date: formatDate(article.updated_date),
-            moderated_date: formatDate(article.moderated_date),
-            author: authorDisplay,
-            status: article.status || "Pending",
-            publisher: article.publisher || "Unknown Publisher",
-            rating: article.rating ?? "Not rated",
-          };
-        });
-
-        setArticles(processedData);
-        setFetchError("");
-      } catch (error) {
-        console.error("Full error details:", error);
-        setFetchError("Failed to load articles. Please try again later.");
+      } catch (err: any) {
+        console.error("Failed to load articles:", err);
+        setError("Failed to fetch articles");
       } finally {
         setLoading(false);
       }
     };
+
     fetchArticles();
-  }, [searchQuery]);
+  }, []);
 
-  const statusOptions = Array.from(
-    new Set(
-      articles
-        .map((article) => article.status)
-        .filter((status) => status && status !== "Unknown")
-    )
-  );
-
-  const validateYears = (start: string, end: string): boolean => {
-    const startNum = parseInt(start);
-    const endNum = parseInt(end);
-
-    if (start && end && startNum > endNum) {
-      setErrorMessage("End year cannot be earlier than start year");
-      return false;
-    }
-
-    if (startNum < 1900 || endNum > new Date().getFullYear()) {
-      setErrorMessage("Years must be between 1900 and current year");
-      return false;
-    }
-
-    setErrorMessage("");
-    return true;
-  };
-
-  const filteredData = articles
-    .filter((article) => {
-      const matchesStatus =
-        selectedStatus === "All" || article.status === selectedStatus;
-      const pubYear = article.published_date
-        ? parseInt(article.published_date)
-        : 0;
-
-      let matchesYear = true;
-      if (startYear && endYear) {
-        matchesYear =
-          pubYear >= parseInt(startYear) && pubYear <= parseInt(endYear);
-      }
-
-      const authorString = Array.isArray(article.author)
-        ? article.author.join(", ")
-        : article.author || "Unknown Author";
-
-      const matchesSearch =
-        article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        authorString.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (article.description &&
-          article.description
-            .toLowerCase()
-            .includes(searchQuery.toLowerCase()));
-
-      return matchesStatus && matchesYear && matchesSearch;
-    })
-    .sort((a, b) =>
-      sortOrder === "asc"
-        ? (parseInt(a.published_date) || 0) - (parseInt(b.published_date) || 0)
-        : (parseInt(b.published_date) || 0) - (parseInt(a.published_date) || 0)
-    );
-
-  const headers = [
-    { key: "title", label: "Title" },
-    { key: "author", label: "Author" },
-    { key: "published_date", label: "Year" },
-    { key: "publisher", label: "Publisher" },
-    { key: "status", label: "Status" },
-    { key: "journal", label: "Journal" },
-    { key: "rating", label: "Rating" },
-    { key: "moderatedBy", label: "Moderated By" },
-  ];
-
-  if (loading) {
-    return <div className="container">Loading articles...</div>;
-  }
-
-  if (fetchError) {
-    return <div className="container error-message">{fetchError}</div>;
-  }
+  if (loading)
+    return <div className="container">Loading random article...</div>;
+  if (error) return <div className="container error-message">{error}</div>;
+  if (!randomArticle)
+    return <div className="container">No article to display</div>;
 
   return (
     <div className="container">
-      <div className="filters">
-        <input
-          type="text"
-          placeholder="Search articles..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="search-input"
-        />
-
-        <select
-          value={selectedStatus}
-          onChange={(e) => setSelectedStatus(e.target.value)}
-        >
-          <option value="All">All Statuses</option>
-          {statusOptions.map((status) => (
-            <option key={status} value={status}>
-              {status}
-            </option>
-          ))}
-        </select>
-
-        <div className="year-inputs">
-          <input
-            type="number"
-            placeholder="Start year"
-            value={startYear}
-            onChange={(e) => setStartYear(e.target.value)}
-            min="1900"
-            max={new Date().getFullYear()}
-          />
-          <input
-            type="number"
-            placeholder="End year"
-            value={endYear}
-            onChange={(e) => setEndYear(e.target.value)}
-            min="1900"
-            max={new Date().getFullYear()}
-          />
-        </div>
-
-        <select
-          value={sortOrder}
-          onChange={(e) => setSortOrder(e.target.value as "asc" | "desc")}
-        >
-          <option value="asc">Oldest First</option>
-          <option value="desc">Newest First</option>
-        </select>
+      <div className="text-center mb-8 pt-8 max-w-4xl mx-auto">
+        <p className="text-3xl font-bold">
+          Welcome to the Software Practice Empirical Evidence Database
+        </p>
+        <p className="text-lg text-gray-700">
+          Your number one source for evaluating SE practices
+        </p>
+        <p className="text-sm text-gray-500 mt-1">
+          Covering {articles.length} articles
+        </p>
       </div>
 
-      {errorMessage && <div className="error-message">{errorMessage}</div>}
+      <h1 className="text-3xl font-bold mb-6 text-center">Featured Article</h1>
+      <div className="max-w-xl mx-auto bg-white shadow-lg rounded-2xl p-6 border border-gray-200">
+        <h2 className="text-xl font-semibold text-gray-800 mb-2">
+          {randomArticle.title}
+        </h2>
+        <p className="text-sm text-gray-600 mb-1">
+          <strong>Author:</strong> {randomArticle.author}
+        </p>
+        <p className="text-sm text-gray-600 mb-1">
+          <strong>Published:</strong> {randomArticle.published_date}
+        </p>
+        {randomArticle.publisher && (
+          <p className="text-sm text-gray-600 mb-1">
+            <strong>Publisher:</strong> {randomArticle.publisher}
+          </p>
+        )}
+        {randomArticle.journal && (
+          <p className="text-sm text-gray-600 mb-1">
+            <strong>Journal:</strong> {randomArticle.journal}
+          </p>
+        )}
+        {randomArticle.description && (
+          <p className="text-sm text-gray-700 mt-4">
+            {randomArticle.description}
+          </p>
+        )}
+      </div>
 
-      {filteredData.length === 0 && searchQuery && (
-        <div className="no-results">
-          No articles found matching "{searchQuery}"
+      <div className="text-center py-14">
+        <a
+          href="/articles"
+          className="inline-block min-w-[300px] mt-6 px-6 py-3 text-white bg-blue-600 hover:bg-blue-700 rounded-lg text-lg font-semibold transition duration-200"
+        >
+          Start Browsing
+        </a>
+      </div>
+
+      <hr className="my-8 border-t border-gray-300" />
+
+      <div className="container mx-auto px-4">
+        <h2 className="text-xl font-semibold mb-4 text-center">
+          Latest Articles
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {articles
+            .sort((a, b) => {
+              const dateA = new Date(
+                a.updated_date ?? a.published_date
+              ).getTime();
+              const dateB = new Date(
+                b.updated_date ?? b.published_date
+              ).getTime();
+              return dateB - dateA;
+            })
+            .slice(0, 9)
+            .map((article) => (
+              <div
+                key={article._id}
+                className="bg-white border border-gray-200 shadow-sm rounded-lg p-4 hover:shadow-md transition"
+              >
+                <h3 className="text-lg font-bold mb-1">{article.title}</h3>
+                <p className="text-sm text-gray-600 mb-2">
+                  By {article.author} • {article.published_date}
+                </p>
+                <p className="text-sm text-gray-700 line-clamp-3">
+                  {article.description || "No description available."}
+                </p>
+              </div>
+            ))}
         </div>
-      )}
-
-      {filteredData.length === 0 && !searchQuery && (
-        <div className="no-results">No articles found</div>
-      )}
-
-      {filteredData.length > 0 && (
-        <SortableTable headers={headers} data={filteredData} />
-      )}
+      </div>
     </div>
   );
 }
