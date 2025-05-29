@@ -1,18 +1,11 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-
-import { ArticleSchema } from './schemas/article.schema';
-
-@Module({
-  imports: [
-    ConfigModule.forRoot(),
-
-import { MongooseModule } from '@nestjs/mongoose';
-import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ArticleModule } from './articles/article.module';
+import { ArticleSchema } from './schemas/article.schema';
 import { ModerationModule } from './moderation/moderation.module';
 
 @Module({
@@ -29,7 +22,7 @@ import { ModerationModule } from './moderation/moderation.module';
       inject: [ConfigService],
     }),
 
-    MongooseModule.forFeature([{ name: 'Article', schema: ArticleSchema }])
+    MongooseModule.forFeature([{ name: 'Article', schema: ArticleSchema }]),
 
     ArticleModule,
     ModerationModule,
@@ -38,8 +31,6 @@ import { ModerationModule } from './moderation/moderation.module';
   controllers: [AppController],
   providers: [AppService],
 })
-
-export class AppModule {}
 
 
 export class AppModule { }
