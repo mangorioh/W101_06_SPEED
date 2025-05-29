@@ -8,7 +8,11 @@ commit naming,
 `fe/be: context`
 
 # front end node cmds
-
 `npm run dev` live reloading
 `npm run build`
 `npm run start`
+# backend node cmds
+`npm run start:debug` live reloading
+`npm run build`
+`npm run start`
+
