@@ -8,5 +8,8 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe());
   await app.listen(process.env.PORT ?? 3000);
 }
-
-bootstrap();
+bootstrap().catch((err) => {
+  console.error('catastrophic failure on start', err);
+  // should just exit asap
+  process.exit(1);
+});

@@ -16,7 +16,7 @@ import { ModerationModule } from './moderation/moderation.module';
     }),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
+      useFactory: (configService: ConfigService) => ({
         uri: configService.get<string>('DB_URI'),
       }),
       inject: [ConfigService],
@@ -30,6 +30,4 @@ import { ModerationModule } from './moderation/moderation.module';
   controllers: [AppController],
   providers: [AppService],
 })
-
-export class AppModule { }
-
+export class AppModule {}

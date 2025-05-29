@@ -1,4 +1,4 @@
 export class ModerationDecisionDto {
-    decision: 'accepted' | 'under moderation'
-    moderator: string;
+  decision: 'accepted' | 'under moderation';
+  moderator: string;
 }

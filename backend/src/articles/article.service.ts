@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Article } from './article.schema';
@@ -7,7 +7,7 @@ import { UpdateArticleDto } from './update-article.dto';
 
 @Injectable()
 export class ArticleService {
-  reject(id: string, rejectDto: any) {
+  reject() {
     throw new Error('Method not implemented.');
   }
   constructor(

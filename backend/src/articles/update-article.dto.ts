@@ -13,7 +13,7 @@ export class UpdateArticleDto {
   submitter?: string;
   updated_date?: Date;
   status?: string;
-  moderatedBy?:string;
+  moderatedBy?: string;
   moderated_date?: Date;
   reason_for_decision?: string;
   rating?: number;

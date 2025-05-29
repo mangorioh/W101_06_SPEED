@@ -1,16 +1,4 @@
-import {
-    Body,
-    Controller,
-    Delete,
-    Get,
-    HttpException,
-    HttpStatus,
-    Param,
-    Post,
-    Put,
-    NotFoundException,
-    Patch,
-  } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Patch } from '@nestjs/common';
 
 import { ModerationService } from './moderation.service';
 import { ModerationDecisionDto } from './moderation-decision.dto';
@@ -44,14 +32,11 @@ export class ModerationController {
   }
 
   @Patch(':id/reject')
-  rejectArticle(
-    @Param('id') id: string,
-    @Body() rejectDto: RejectArticleDto
-  ) {
+  rejectArticle(@Param('id') id: string, @Body() rejectDto: RejectArticleDto) {
     return this.moderationService.rejectArticle(
       id,
       rejectDto.rejectionReason,
       rejectDto.moderator,
-    )
+    );
   }
 }

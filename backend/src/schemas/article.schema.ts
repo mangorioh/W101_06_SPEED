@@ -1,8 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 
-
-
 @Schema({ collection: 'articles' })
 export class Article extends Document {
   @Prop()
@@ -19,7 +17,6 @@ export class Article extends Document {
 
   @Prop()
   description: string;
-
 
   @Prop()
   publisher: string;
