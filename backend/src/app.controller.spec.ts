@@ -16,7 +16,7 @@ describe('AppController', () => {
 
   describe('root', () => {
     it('should return "SPEED backend is running..."', () => {
-      expect(appController.getHello()).toBe("SPEED BACKEND is running...");
+      expect(appController.getHello()).toBe('SPEED BACKEND is running...');
     });
   });
 });

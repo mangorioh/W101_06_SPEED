@@ -1,10 +1,12 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { ArticleSchema } from './schemas/article.schema';
+
 import { ArticleModule } from './articles/article.module';
+import { ArticleSchema } from './schemas/article.schema';
 import { ModerationModule } from './moderation/moderation.module';
 
 @Module({
@@ -19,7 +21,9 @@ import { ModerationModule } from './moderation/moderation.module';
       }),
       inject: [ConfigService],
     }),
+
     MongooseModule.forFeature([{ name: 'Article', schema: ArticleSchema }]),
+
     ArticleModule,
     ModerationModule,
   ],
