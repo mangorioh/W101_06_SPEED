@@ -10,12 +10,24 @@ const NavBar = () => {
       <div className="flex">
         <NavComponent href="/" label="Home" />
         <NavComponent label="Moderation">
-          <NavComponent href="/moderation" label="View Moderation Queue" />
-          <NavComponent href="/moderation/rejects" label="View rejection queue" />
+          <NavComponent
+            href="/moderation/queue"
+            label="View Moderation Queue"
+          />
+          <NavComponent
+            href="/moderation/rejects"
+            label="View rejection queue"
+          />
         </NavComponent>
         <NavComponent label="Articles">
           <NavComponent href="/articles" label="view all articles" />
           <NavComponent href="/articles/submit" label="submit new article" />
+        </NavComponent>
+        <NavComponent label="Users">
+          <NavComponent href="/user/login" label="Login" />
+          <NavComponent href="/user/register" label="Register" />
+          <NavComponent href="/user/profile" label="Profile" />
+          <NavComponent href="/user/logout" label="Logout" />
         </NavComponent>
       </div>
     </nav>

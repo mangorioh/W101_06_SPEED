@@ -10,6 +10,9 @@ export class User {
 
   @Prop({ required: true })
   password: string; // hashed
+
+  @Prop({ type: String, enum: ['user', 'mod', 'owner'], default: 'user' })
+  role: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

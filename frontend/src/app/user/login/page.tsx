@@ -24,8 +24,8 @@ const LoginPage: React.FC = () => {
 
       if (response.ok) {
         const data = await response.json();
+        localStorage.setItem("token", data.access_token); // Store token in localStorage
         console.log("Login successful!", data);
-        alert("Login successful!");
         router.push("/");
       } else {
         const errorData = await response.json();
@@ -89,7 +89,7 @@ const LoginPage: React.FC = () => {
         </button>
         <p className="text-center text-sm text-gray-600 mt-4">
           Don't have an account?{" "}
-          <a href="/register" className="text-blue-600 hover:underline">
+          <a href="/user/register" className="text-blue-600 hover:underline">
             Register here
           </a>
         </p>

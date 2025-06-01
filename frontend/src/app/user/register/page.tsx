@@ -32,7 +32,7 @@ const RegisterPage: React.FC = () => {
         const data = await response.json();
         console.log("Registration successful!", data);
         alert("Registration successful! Please log in.");
-        router.push("/login");
+        router.push("/user/login");
       } else {
         const errorData = await response.json();
         console.error("Registration failed:", errorData);

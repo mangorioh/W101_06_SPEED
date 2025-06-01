@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useState, ReactNode } from "react";
+import { useState, useRef, useEffect, ReactNode } from "react";
 
 interface NavComponentProps {
   href?: string;
@@ -15,17 +15,40 @@ const NavComponent: React.FC<NavComponentProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const hasChildren = !!children;
+  const navRef = useRef<HTMLDivElement>(null);
+
   const toggleDropdown = () => {
     if (hasChildren) {
-      setIsOpen(!isOpen);
+      setIsOpen((prev) => !prev);
     }
   };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleClickOutside = (event: MouseEvent) => {
+      if (navRef.current && !navRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isOpen]);
+
+  // Close dropdown when a child link is clicked
+  const handleChildClick = () => {
+    setIsOpen(false);
+  };
+
   return (
-    <div className="relative">
+    <div className="relative" ref={navRef}>
       {href ? (
         <Link
           href={href}
           className="block py-2 px-4 hover:bg-blue-800 rounded-md"
+          onClick={() => setIsOpen(false)}
         >
           {label}
         </Link>
@@ -43,7 +66,15 @@ const NavComponent: React.FC<NavComponentProps> = ({
             isOpen ? "block" : "hidden"
           }`}
         >
-          {children}
+          {/* Clone children to add onClick to close dropdown */}
+          {Array.isArray(children)
+            ? children.map((child, idx) =>
+                child && typeof child === "object"
+                  ? // @ts-ignore
+                    { ...child, props: { ...child.props, onClick: handleChildClick } }
+                  : child
+              )
+            : children}
         </div>
       )}
     </div>

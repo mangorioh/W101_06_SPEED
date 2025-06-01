@@ -1,24 +1,31 @@
-import { Body, Controller, Get, Param, Post, Patch } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Patch, UseGuards } from '@nestjs/common';
 
 import { ModerationService } from './moderation.service';
 import { ModerationDecisionDto } from './moderation-decision.dto';
 import { RejectArticleDto } from './reject-article.dto';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../auth/roles.guard';
+import { Roles } from '../auth/roles.decorator';
 
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('moderation')
 export class ModerationController {
   constructor(private readonly moderationService: ModerationService) {}
 
+  @Roles('mod', 'owner')
   @Get('queue')
   getPendingArticles() {
     //return "Test for Pending";
     return this.moderationService.getPendingArticles();
   }
 
+  @Roles('mod', 'owner')
   @Get('rejects')
   getRejectedArticles() {
     return this.moderationService.getRejectedArticles();
   }
 
+  @Roles('mod', 'owner')
   @Post('article/:id/decision')
   moderateArticle(
     @Param('id') id: string,
