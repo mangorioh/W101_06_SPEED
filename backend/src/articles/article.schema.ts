@@ -61,6 +61,9 @@ export class Article {
 
   @Prop()
   rating: number;
+
+  @Prop()
+  practice: string[];
 }
 
 export const ArticleSchema = SchemaFactory.createForClass(Article);

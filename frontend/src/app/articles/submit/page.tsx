@@ -27,7 +27,7 @@ const SubmitArticlePage = () => {
         
         //map bibtex tags to form fields
         setTitle(entry.title?.replace(/[{}]/g, "") || "");
-        setAuthors(
+        setauthor(
           entry.author
             ? entry.author
                 .split(/ and |,/i)
@@ -50,7 +50,7 @@ const SubmitArticlePage = () => {
 
     //fields
     const [title, setTitle] = useState("");
-    const [authors, setAuthors] = useState<string[]>([""]);
+    const [author, setauthor] = useState<string[]>([""]);
     const [journal, setJournal] = useState("");
     const [pubYear, setPubYear] = useState<number>(0);
     const [volume, setVolume] = useState("");
@@ -61,7 +61,7 @@ const SubmitArticlePage = () => {
     const submitNewArticle = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
 
-        if (!title.trim() || authors.some(a => !a.trim()) || !journal.trim() || !doi.trim()) {
+        if (!title.trim() || author.some(a => !a.trim()) || !journal.trim() || !doi.trim()) {
             alert("Please fill in all required fields: Title, Author(s), Journal, and DOI.");
             return;
         }
@@ -69,7 +69,7 @@ const SubmitArticlePage = () => {
         console.log(
         JSON.stringify({
             title,
-            authors,
+            author,
             journal,
             publication_year: pubYear,
             volume,
@@ -86,7 +86,7 @@ const SubmitArticlePage = () => {
         },
         body: JSON.stringify({
             title,
-            authors,
+            author,
             journal,
             publication_year: pubYear,
             volume,
@@ -97,9 +97,9 @@ const SubmitArticlePage = () => {
       });
   };
 
-  const addAuthor = () => setAuthors([...authors, ""]);
-  const removeAuthor = (index: number) => setAuthors(authors.filter((_, i) => i !== index));
-  const changeAuthor = (index: number, value: string) => setAuthors(authors.map((author, i) => (i === index ? value : author)));
+  const addAuthor = () => setauthor([...author, ""]);
+  const removeAuthor = (index: number) => setauthor(author.filter((_, i) => i !== index));
+  const changeAuthor = (index: number, value: string) => setauthor(author.map((author, i) => (i === index ? value : author)));
 
   return (
     <div className="max-w-2xl mx-auto p-6">
@@ -144,7 +144,7 @@ const SubmitArticlePage = () => {
                 <label className="block font-medium">
                     Author(s) <span className="text-xs">Required</span>
                 </label>
-                {authors.map((author, index) => (
+                {author.map((author, index) => (
                     <div key={index} className="flex space-x-2 mb-2">
                     <input
                         type="text"
