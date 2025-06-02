@@ -6,7 +6,7 @@ interface Article {
   _id: string;
   title: string;
   summary: string;
-  submittedBy: string;
+  submitter: string;
   status: string;
   rejectionReason?: string;
 }
@@ -74,7 +74,7 @@ const ModerateArticlesPage = () => {
             <h2 className="text-xl font-semibold">{article.title}</h2>
             <p className="text-gray-700 mt-2">{article.summary}</p>
             <p className="text-sm text-gray-500 mt-1">
-              Submitted by: {article.submittedBy}
+              Submitted by: {article.submitter}
             </p>
 
             <div className="flex gap-4 mt-4">
