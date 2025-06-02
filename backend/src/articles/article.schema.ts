@@ -59,8 +59,11 @@ export class Article {
   @Prop()
   reason_for_decision: string;
 
-  @Prop()
-  rating: number;
+  @Prop({ type: Number, default: 0 })
+  ratingSum: number;
+
+  @Prop({ type: Number, default: 0 })
+  ratingCount: number;
 }
 
 export const ArticleSchema = SchemaFactory.createForClass(Article);
