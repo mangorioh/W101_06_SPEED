@@ -15,7 +15,6 @@ export class ModerationController {
   @Roles('mod', 'owner')
   @Get('queue')
   getPendingArticles() {
-    //return "Test for Pending";
     return this.moderationService.getPendingArticles();
   }
 
@@ -23,6 +22,12 @@ export class ModerationController {
   @Get('rejects')
   getRejectedArticles() {
     return this.moderationService.getRejectedArticles();
+  }
+
+  @Roles('mod', 'owner')
+  @Get('removed')
+  getRemovedArticles() {
+    return this.moderationService.getRemovedArticles();
   }
 
   @Roles('mod', 'owner')
@@ -46,5 +51,10 @@ export class ModerationController {
       rejectDto.rejectionReason,
       rejectDto.moderator,
     );
+  }
+
+  @Patch(':id/remove')
+  removeArticle(@Param('id') id: string) {
+    return this.moderationService.removeArticle(id);
   }
 }

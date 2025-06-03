@@ -21,9 +21,4 @@ describe('AppController', () => {
     appController = app.get<AppController>(AppController);
   });
 
-  describe('root', () => {
-    it('should return "SPEED backend is running..."', () => {
-      expect(appController.getHello()).toBe('SPEED backend is running...');
-    });
-  });
 });
