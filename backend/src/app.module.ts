@@ -6,8 +6,10 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
 import { ArticleModule } from './articles/article.module';
-import { ArticleSchema } from './schemas/article.schema';
+import { ArticleSchema } from './articles/article.schema';
 import { ModerationModule } from './moderation/moderation.module';
+import { UsersModule } from './users/users.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -26,6 +28,8 @@ import { ModerationModule } from './moderation/moderation.module';
 
     ArticleModule,
     ModerationModule,
+    UsersModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],

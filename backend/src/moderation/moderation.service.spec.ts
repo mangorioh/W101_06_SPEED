@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ModerationService } from './moderation.service';
 import { ArticleService } from '../articles/article.service';
+import { Article } from '../articles/article.schema';
 
 describe('ModerationService', () => {
   let moderationService: ModerationService;
@@ -27,17 +28,18 @@ describe('ModerationService', () => {
       const mockReason = 'Too vague and unsupported.';
       const mockModerator = 'mod1';
 
-      const mockUpdatedArticle = {
-        _id: mockId,
+      // Explicitly type the mock article to avoid 'any'
+      const mockUpdatedArticle: Partial<Article> = {
         status: 'rejected',
-        rejectionReason: mockReason,
+        reason_for_decision: mockReason,
         moderatedBy: mockModerator,
-        moderated_date: expect.any(Date),
+        moderated_date: new Date(),
         rating: 0,
       };
 
       articleService.update!.mockResolvedValue(mockUpdatedArticle);
 
+      // Let TypeScript infer the type from the method signature
       const result = await moderationService.rejectArticle(
         mockId,
         mockReason,
@@ -48,7 +50,7 @@ describe('ModerationService', () => {
         status: 'rejected',
         reason_for_decision: mockReason,
         moderatedBy: mockModerator,
-        moderated_date: expect.any(Date),
+        moderated_date: expect.any(Date) as Date,
         rating: 0,
       });
 

@@ -43,7 +43,7 @@ export default function HomePage() {
   useEffect(() => {
     const fetchArticles = async () => {
       try {
-        const res = await fetch("http://localhost:3000/api/articles");
+        const res = await fetch("http://localhost:3000/articles");
         const data: Article[] = await res.json();
 
         // Format each article

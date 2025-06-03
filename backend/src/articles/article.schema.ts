@@ -45,7 +45,7 @@ export class Article {
   updated_date: Date;
 
   @Prop({
-    enum: ['pending', 'under moderation', 'accepted', 'rejected'],
+    enum: ['pending', 'under moderation', 'accepted', 'rejected', 'removed'],
     default: 'pending',
   })
   status: string;
@@ -64,6 +64,9 @@ export class Article {
 
   @Prop({ type: Number, default: 0 })
   ratingCount: number;
+
+  @Prop()
+  practice: string[];
 }
 
 export const ArticleSchema = SchemaFactory.createForClass(Article);
