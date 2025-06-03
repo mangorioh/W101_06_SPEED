@@ -9,8 +9,8 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
-import { CreateUserDto } from './dto/create-user.dto'; // Will create this DTO
-import { LoginUserDto } from './dto/login-user.dto'; // Will create this DTO
+import { CreateUserDto } from './dto/create-user.dto';
+import { User } from '../users/user.schema';
 
 @Controller('auth')
 export class AuthController {
@@ -19,7 +19,7 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @UseGuards(AuthGuard('local'))
   @Post('login')
-  async login(@Request() req, @Body() loginUserDto: LoginUserDto) {
+  login(@Request() req: { user: User }) {
     // passport-local puts the validated user in req.user
     return this.authService.login(req.user);
   }

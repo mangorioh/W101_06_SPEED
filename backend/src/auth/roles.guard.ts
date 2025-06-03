@@ -7,6 +7,10 @@ import {
 import { Reflector } from '@nestjs/core';
 import { ROLES_KEY } from './roles.decorator';
 
+interface RequestWithUser {
+  user?: { role?: string };
+}
+
 @Injectable()
 export class RolesGuard implements CanActivate {
   constructor(private reflector: Reflector) {}
@@ -19,8 +23,13 @@ export class RolesGuard implements CanActivate {
     if (!requiredRoles) {
       return true; // No roles required
     }
-    const { user } = context.switchToHttp().getRequest();
-    if (!user || !requiredRoles.includes(user.role)) {
+    const request = context.switchToHttp().getRequest<RequestWithUser>();
+    const user = request.user;
+    if (
+      !user ||
+      typeof user.role !== 'string' ||
+      !requiredRoles.includes(user.role)
+    ) {
       throw new ForbiddenException('Insufficient role');
     }
     return true;
