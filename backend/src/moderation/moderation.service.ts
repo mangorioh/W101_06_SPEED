@@ -1,9 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject, forwardRef } from '@nestjs/common';
 import { ArticleService } from '../articles/article.service';
 
 @Injectable()
 export class ModerationService {
-  constructor(private readonly articleService: ArticleService) {}
+  constructor(
+    @Inject(forwardRef(() => ArticleService))
+    private readonly articleService: ArticleService
+  ) {}
 
   //Get all articles with status 'pending'
   async getPendingArticles() {
