@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Param, Post, Patch, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Patch,
+  UseGuards,
+} from '@nestjs/common';
 
 import { ModerationService } from './moderation.service';
 import { ModerationDecisionDto } from './moderation-decision.dto';
@@ -10,7 +18,7 @@ import { Roles } from '../auth/roles.decorator';
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('moderation')
 export class ModerationController {
-  constructor(private readonly moderationService: ModerationService) { }
+  constructor(private readonly moderationService: ModerationService) {}
 
   @Roles('mod', 'owner')
   @Get('queue')

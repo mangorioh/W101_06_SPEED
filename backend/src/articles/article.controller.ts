@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Param, Post, Put, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Put,
+  UseGuards,
+} from '@nestjs/common';
 
 import { ArticleService } from './article.service';
 import { CreateArticleDto } from './create-article.dto';
@@ -7,11 +15,11 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 
-@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('articles')
 export class ArticleController {
-  constructor(private readonly articleService: ArticleService) { }
+  constructor(private readonly articleService: ArticleService) {}
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('user', 'mod', 'owner')
   @Post()
   create(@Body() createArticleDto: CreateArticleDto) {
@@ -27,6 +35,8 @@ export class ArticleController {
   findOne(@Param('id') id: string) {
     return this.articleService.findById(id);
   }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('mod', 'owner')
   @Put(':id')
   update(@Param('id') id: string, @Body() updateArticleDto: UpdateArticleDto) {

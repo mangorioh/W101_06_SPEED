@@ -3,27 +3,26 @@ import { UsersService } from './users.service';
 import { getModelToken } from '@nestjs/mongoose';
 
 describe('UsersService', () => {
-    let service: UsersService;
+  let service: UsersService;
 
-    beforeEach(async () => {
-        const module: TestingModule = await Test.createTestingModule({
-            providers: [UsersService],
-            providers: [
-                UsersService,
-                {
-                    provide: getModelToken('User'),
-                    useValue: {
-                        findOne: jest.fn(),
-                        create: jest.fn(),
-                        // add other methods as needed
-                    },
-                },
-            ],
-        }).compile();
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        UsersService,
+        {
+          provide: getModelToken('User'),
+          useValue: {
+            findOne: jest.fn(),
+            create: jest.fn(),
+            // add other methods as needed
+          },
+        },
+      ],
+    }).compile();
 
-        service = module.get<UsersService>(UsersService);
-    });
-    it('should be defined', () => {
-        expect(service).toBeDefined();
-    });
+    service = module.get<UsersService>(UsersService);
+  });
+  it('should be defined', () => {
+    expect(service).toBeDefined();
+  });
 });
