@@ -37,6 +37,8 @@ export class ArticleService {
 
         const rejectArticle = new this.articleModel(createArticleDto);
         rejectArticle.status = 'removed';
+        rejectArticle.reason_for_decision = "Article with DOI already in database";
+        rejectArticle.moderatedBy = "System Automation";
 
         // If an article is already there
         return rejectArticle.save();
