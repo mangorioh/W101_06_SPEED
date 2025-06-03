@@ -4,7 +4,7 @@ export class CreateArticleDto {
   journal: string;
   number: number;
   isbn: string;
-  author: string;
+  author: string[];
   description: string;
   DOI: string;
   URL: string;
@@ -19,4 +19,5 @@ export class CreateArticleDto {
   rating: number;
   rating_sum: number;
   rating_count: number;
+  practice: string[];
 }

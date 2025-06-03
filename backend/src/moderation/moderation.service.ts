@@ -20,6 +20,15 @@ export class ModerationService {
     return rejected_articles;
   }
 
+  //Get all removed articles
+  async getRemovedArticles() {
+    const allArticles = await this.articleService.findAll();
+    const removed_articles = allArticles.filter(
+      (article) => article.status === 'removed',
+    );
+    return removed_articles;
+  }
+
   //Change article's (by id) mod stat, plus add moderation date and moderator
   async moderateArticle(
     id: string,
@@ -42,6 +51,12 @@ export class ModerationService {
       moderatedBy: moderator,
       moderated_date: new Date(),
       rating: 0,
+    });
+  }
+
+  async removeArticle(id: string) {
+    return this.articleService.update(id, {
+      status: 'removed',
     });
   }
 }
