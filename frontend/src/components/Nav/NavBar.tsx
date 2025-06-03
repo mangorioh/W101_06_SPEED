@@ -10,7 +10,10 @@ const NavBar = () => {
       <div className="flex">
         <NavComponent href="/" label="Home" />
         <NavComponent label="Moderation">
-          <NavComponent href="/moderation" label="View Moderation Queue" />
+          <NavComponent
+            href="/moderation/queue"
+            label="View Moderation Queue"
+          />
           <NavComponent
             href="/moderation/rejects"
             label="View rejection queue"
