@@ -8,7 +8,7 @@ export class CreateArticleDto {
   description: string;
   DOI: string;
   URL: string;
-  published_date: string;
+  published_date: Date;
   publisher: string;
   submitter: string;
   updated_date: Date;
