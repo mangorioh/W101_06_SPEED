@@ -4,7 +4,7 @@ import { Model } from 'mongoose';
 import { Article } from './article.schema';
 import { CreateArticleDto } from './create-article.dto';
 import { UpdateArticleDto } from './update-article.dto';
-import { ModerationService } from 'src/moderation/moderation.service';
+import { ModerationService } from '../moderation/moderation.service';
 
 @Injectable()
 export class ArticleService {
