@@ -1,33 +1,45 @@
-import { Controller, Post, Put, Get, Body, Param, Req, UseGuards, ParseIntPipe } from '@nestjs/common';
+import { Controller, Put, Get, Body, Param, ParseIntPipe, Req, UseGuards } from '@nestjs/common';
 import { RatingService } from './rating.service';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CreateOrUpdateRatingDto } from './rating.dto';
 
 @Controller('articles/:articleId/rating')
+@UseGuards(JwtAuthGuard)
 export class RatingController {
-  constructor(private readonly ratingService: RatingService) {}
+    constructor(private readonly ratingService: RatingService) { }
 
-  @Get()
-  // qrq1356
-  async getUserRating(@Param('articleId') articleId: string/*, @Req() req*/) {
-    // qrq1356
-    const userId = 'MOCK_USER_ID';
-    return this.ratingService.findUserRating(articleId, userId);
-  }
+    // Get the current user's rating for an article
+    @Get()
+    async getUserRating(
+        @Param('articleId') articleId: string,
+        @Req() req: any
+    ) {
+        // Get userId from JWT-authenticated request
+        const userId = req.user?.userId;
+        if (!userId) {
+            throw new Error('User not authenticated');
+        }
+        return this.ratingService.findUserRating(articleId, userId);
+    }
 
-  @Put()
-  // qrq1356
-  async createOrUpdate(
-    @Param('articleId') articleId: string,
-    // qrq1356
-    @Body('value', ParseIntPipe) value: number,
-  ) {
-    // qrq1356
-    const userId = 'MOCK_USER_ID';
-    return this.ratingService.createOrUpdateRating(userId, { articleId, value });
-  }
+    // Create or update the current user's rating for an article
+    @Put()
+    async createOrUpdate(
+        @Param('articleId') articleId: string,
+        @Body('value', ParseIntPipe) value: number,
+        @Req() req: any
+    ) {
+        // Get userId from JWT-authenticated request
+        const userId = req.user?.userId;
+        if (!userId) {
+            throw new Error('User not authenticated');
+        }
+        return this.ratingService.createOrUpdateRating(userId, { articleId, value });
+    }
 
-  @Get('summary')
-  async getSummary(@Param('articleId') articleId: string) {
-    return this.ratingService.getArticleRatingInfo(articleId);
-  }
+    // Get the summary (average and count) of ratings for an article
+    @Get('summary')
+    async getSummary(@Param('articleId') articleId: string) {
+        return this.ratingService.getArticleRatingInfo(articleId);
+    }
 }
