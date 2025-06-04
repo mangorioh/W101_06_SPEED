@@ -59,6 +59,29 @@ export default function ArticlesPage() {
     claims,
   });
 
+  const lowerQuery = searchQuery.trim().toLowerCase();
+  const displayedArticles = lowerQuery
+    ? filteredArticles.filter((article) => {
+        // Title match (assuming title is a string)
+        const titleMatch = typeof article.title === "string"
+          ? article.title.toLowerCase().includes(lowerQuery)
+          : false;
+
+        // Author field might be a string or array of strings
+        let authorField = "";
+        if (typeof article.author === "string") {
+          authorField = article.author;
+        } else if (Array.isArray(article.author)) {
+          authorField = article.author.join(" ");
+        }
+        const authorMatch = authorField
+          .toLowerCase()
+          .includes(lowerQuery);
+
+        return titleMatch || authorMatch;
+      })
+    : filteredArticles;
+
   if (loading || metadataLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -88,12 +111,12 @@ export default function ArticlesPage() {
         headers={headers}
       />
 
-      {filteredArticles.length === 0 ? (
+      {displayedArticles.length === 0 ? (
         <p>No results found.</p>
       ) : (
         <SortableTable
           headers={headers}
-          data={filteredArticles.map((article) => ({
+          data={displayedArticles.map((article) => ({
             ...article,
             practice: Array.isArray(article.practice)
               ? article.practice.join(", ")
