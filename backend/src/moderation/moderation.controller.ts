@@ -18,7 +18,7 @@ import { Roles } from '../auth/roles.decorator';
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('moderation')
 export class ModerationController {
-  constructor(private readonly moderationService: ModerationService) {}
+  constructor(private readonly moderationService: ModerationService) { }
 
   @Roles('mod', 'owner')
   @Get('queue')
@@ -64,5 +64,11 @@ export class ModerationController {
   @Patch(':id/remove')
   removeArticle(@Param('id') id: string) {
     return this.moderationService.removeArticle(id);
+  }
+
+  @Roles('user', 'mod', 'owner')
+  @Get('by-submitter/:submitter')
+  getArticlesBySubmitter(@Param('submitter') submitter: string) {
+    return this.moderationService.getArticlesBySubmitter(submitter);
   }
 }
