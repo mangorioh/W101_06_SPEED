@@ -14,13 +14,16 @@ const LoginPage: React.FC = () => {
     const loginData = { username, password };
 
     try {
-      const response = await fetch("http://localhost:3000/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(loginData),
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_SITE_URL}/auth/login`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(loginData),
+        }
+      );
 
       if (response.ok) {
         const data = await response.json();
@@ -39,7 +42,7 @@ const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
+    <div className="flex flex-col items-center justify-center min-h-screen">
       <form
         onSubmit={handleSubmit}
         className="p-8 rounded-lg shadow-xl bg-white flex flex-col space-y-4 w-96"
@@ -81,12 +84,7 @@ const LoginPage: React.FC = () => {
             className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline"
           />
         </div>
-        <button
-          type="submit"
-          className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-200"
-        >
-          Log In
-        </button>
+        <button type="submit">Log In</button>
         <p className="text-center text-sm text-gray-600 mt-4">
           Don't have an account?{" "}
           <a href="/user/register" className="text-blue-600 hover:underline">

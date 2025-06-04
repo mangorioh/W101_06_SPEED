@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useState, ReactNode } from "react";
+import { ReactNode } from "react";
 
 interface NavComponentProps {
   href?: string;
@@ -13,35 +13,23 @@ const NavComponent: React.FC<NavComponentProps> = ({
   label,
   children,
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
   const hasChildren = !!children;
-  const toggleDropdown = () => {
-    if (hasChildren) {
-      setIsOpen(!isOpen);
-    }
-  };
+
   return (
-    <div className="relative">
+    <div className={`relative group`}>
       {href ? (
         <Link
           href={href}
-          className="block py-2 px-4 hover:bg-blue-800 rounded-md"
+          className="block py-1 px-4 hover:bg-blue-800/60 bg-blue-800 rounded-md"
         >
           {label}
         </Link>
       ) : (
-        <button
-          onClick={toggleDropdown}
-          className="block py-2 px-4 hover:bg-blue-800 rounded-md"
-        >
-          {label}
-        </button>
+        <button className="block py-1 px-4 rounded-md">{label}</button>
       )}
       {hasChildren && (
         <div
-          className={`absolute top-full left-0 shadow-md rounded-md bg-[#001681] z-10 ${
-            isOpen ? "block" : "hidden"
-          }`}
+          className={`absolute top-full p-2 space-y-2 shadow-md rounded-md bg-blue-950 z-10 hidden group-hover:block group-focus-within:block`}
         >
           {children}
         </div>
