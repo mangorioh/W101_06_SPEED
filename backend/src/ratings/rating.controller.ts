@@ -4,11 +4,11 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CreateOrUpdateRatingDto } from './rating.dto';
 
 @Controller('articles/:articleId/rating')
-@UseGuards(JwtAuthGuard)
 export class RatingController {
     constructor(private readonly ratingService: RatingService) { }
 
     // Get the current user's rating for an article
+    @UseGuards(JwtAuthGuard)
     @Get()
     async getUserRating(
         @Param('articleId') articleId: string,
@@ -23,6 +23,7 @@ export class RatingController {
     }
 
     // Create or update the current user's rating for an article
+    @UseGuards(JwtAuthGuard)
     @Put()
     async createOrUpdate(
         @Param('articleId') articleId: string,
