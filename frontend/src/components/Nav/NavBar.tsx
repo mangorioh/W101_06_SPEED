@@ -53,6 +53,7 @@ const NavBar = () => {
         {role === "owner" && (
           <NavComponent label="Owner">
             <NavComponent href="/owner/users" label="Manage Users" />
+            <NavComponent href="/owner/admin" label="Manage SPEED Data" />
           </NavComponent>
         )}
         <NavComponent label="Articles">
