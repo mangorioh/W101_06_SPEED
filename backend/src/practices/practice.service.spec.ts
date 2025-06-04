@@ -1,5 +1,3 @@
-// src/practice/__tests__/practice.service.spec.ts
-
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { getModelToken } from '@nestjs/mongoose';
