@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, ChangeEvent } from "react";
+import { useState, useEffect, useMemo, ChangeEvent } from "react";
 import SortableTable from "@/components/Table/SortableTable";
+import ColumnSelector from "@/components/Table/ColumnSelector";
 
 interface ArticlesInterface {
   _id: string;
@@ -21,33 +22,58 @@ interface ArticlesInterface {
   journal?: string;
   updated_date?: string;
   moderated_date?: string;
+  practice?: string[];
+  claim?: string;
 }
+
+const defaultVisibleColumns = {
+  title: true,
+  author: true,
+  published_date: true,
+  publisher: true,
+  status: true,
+  journal: true,
+  rating_ui: true,
+  moderatedBy: true,
+  practice: true,
+  claim: true,
+};
 
 export default function ArticlesPage() {
   const [articlesRaw, setArticlesRaw] = useState<ArticlesInterface[]>([]);
   const [selectedStatus, setSelectedStatus] = useState<string>("All");
+  const [selectedPractice, setSelectedPractice] = useState<string>("All");
+  const [selectedClaim, setSelectedClaim] = useState<string>("All");
   const [startYear, setStartYear] = useState<string>("");
   const [endYear, setEndYear] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
-  const [loading, setLoading] = useState<boolean>(true);
-  const [fetchError, setFetchError] = useState<string>("");
+  const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState("");
+  const [visibleColumns, setVisibleColumns] = useState<Record<string, boolean>>(
+    () => {
+      if (typeof window !== "undefined") {
+        const saved = localStorage.getItem("columnVisibility");
+        return saved ? JSON.parse(saved) : defaultVisibleColumns;
+      }
+      return defaultVisibleColumns;
+    }
+  );
 
-  // NEW STATE: store per-article rating summary (avg + count)
+  // Rating summary and user rating state
   const [ratingSummaries, setRatingSummaries] = useState<
     Record<string, { averageRating: number; ratingCount: number }>
   >({});
-
-  // NEW STATE: store the current user's own rating (1–5 or null) for each article
   const [userRatings, setUserRatings] = useState<Record<string, number | null>>(
     {}
   );
 
   const getJwt = () => {
-    return localStorage.getItem("token");
+    return typeof window !== "undefined" ? localStorage.getItem("token") : null;
   };
 
+  // Fetch articles
   useEffect(() => {
     const fetchArticles = async () => {
       try {
@@ -62,11 +88,11 @@ export default function ArticlesPage() {
 
         if (!response.ok) {
           const errorText = await response.text();
-          console.error("Error response:", errorText);
           throw new Error(`HTTP error! status: ${response.status}`);
         }
 
         const data = await response.json();
+
         const processedData = data.map((article: any) => {
           const formatDate = (dateString: string | { $date: string }) => {
             try {
@@ -83,6 +109,21 @@ export default function ArticlesPage() {
               ? article.author.join(", ")
               : article.author || "Anonymous";
 
+          const claimArray =
+            typeof article.claim === "string"
+              ? article.claim.split(",").map((id: string) => id.trim())
+              : Array.isArray(article.claim)
+              ? article.claim
+              : [];
+
+          interface PracticeArray extends Array<string> {}
+
+          const practiceArray: PracticeArray = Array.isArray(article.practice)
+            ? article.practice
+            : typeof article.practice === "string" && article.practice !== "N/A"
+            ? article.practice.split(",").map((p: string) => p.trim())
+            : [];
+
           return {
             ...article,
             published_date: formatDate(article.published_date),
@@ -91,47 +132,40 @@ export default function ArticlesPage() {
             author: authorDisplay,
             status: article.status || "Pending",
             publisher: article.publisher || "Unknown Publisher",
-            // We no longer set `rating: article.rating ?? "Not rated"`,
-            // because we will fetch the summary + user rating separately.
-            // Optionally, you could calculate `article.rating = ratingSum / ratingCount` here if available.
-          } as ArticlesInterface;
+            claim: claimArray.join(", "),
+            practice: practiceArray,
+          };
         });
 
         setArticlesRaw(processedData);
         setFetchError("");
       } catch (error) {
-        console.error("Full error details:", error);
+        console.error("Error fetching articles:", error);
         setFetchError("Failed to load articles. Please try again later.");
       } finally {
         setLoading(false);
       }
     };
-
     fetchArticles();
   }, [searchQuery]);
 
-  // Whenever the raw list of articles changes, we want to make two extra calls per article:
-  // 1) GET /articles/:articleId/rating/summary
-  // 2) GET /articles/:articleId/rating
+  // Fetch ratings for all articles
   useEffect(() => {
-    // If there are no articles or we’re still loading, skip.
     if (loading || articlesRaw.length === 0) return;
 
     const fetchRatingsForAll = async () => {
       const jwt = getJwt() ?? "";
-      // We’ll build new copies of these two maps, then setState once.
       const newSummaries: Record<
         string,
         { averageRating: number; ratingCount: number }
       > = {};
       const newUserRatings: Record<string, number | null> = {};
 
-      // We can do them in parallel:
       await Promise.all(
         articlesRaw.map(async (article) => {
           const aId = article._id;
           try {
-            // 1) Summary
+            // Summary
             const summaryResp = await fetch(
               `${process.env.NEXT_PUBLIC_SITE_URL}/articles/${aId}/rating/summary`,
               {
@@ -147,16 +181,14 @@ export default function ArticlesPage() {
                 ratingCount: summaryJson.ratingCount,
               };
             } else {
-              // If article not found or no ratings yet, default to 0
               newSummaries[aId] = { averageRating: 0, ratingCount: 0 };
             }
           } catch (e) {
-            console.error(`Error fetching summary for ${aId}:`, e);
             newSummaries[aId] = { averageRating: 0, ratingCount: 0 };
           }
 
           try {
-            // 2) Current user's own rating
+            // User's own rating
             const userRatingResp = await fetch(
               `${process.env.NEXT_PUBLIC_SITE_URL}/articles/${aId}/rating`,
               {
@@ -181,7 +213,6 @@ export default function ArticlesPage() {
               newUserRatings[aId] = null;
             }
           } catch (e) {
-            console.error(`Error fetching user rating for ${aId}:`, e);
             newUserRatings[aId] = null;
           }
         })
@@ -194,7 +225,7 @@ export default function ArticlesPage() {
     fetchRatingsForAll();
   }, [loading, articlesRaw]);
 
-  // Helper to call the PUT endpoint when user changes rating
+  // Handle rating change
   const handleRatingChange = async (articleId: string, newValue: number) => {
     const jwt = getJwt() ?? "";
     try {
@@ -215,8 +246,6 @@ export default function ArticlesPage() {
         return;
       }
       const updated = await resp.json();
-      // updated: { averageRating: number; ratingCount: number }
-      // Patch our state so the UI immediately updates:
       setUserRatings((prev) => ({
         ...prev,
         [articleId]: newValue,
@@ -233,15 +262,52 @@ export default function ArticlesPage() {
     }
   };
 
-  // Filter / sort logic exactly as before, except that now each article uses ratingSummaries + userRatings instead of article.rating
+  // Column visibility toggle
+  const toggleColumnVisibility = (column: string) => {
+    setVisibleColumns((prev) => {
+      const newVisibility = { ...prev, [column]: !prev[column] };
+      localStorage.setItem("columnVisibility", JSON.stringify(newVisibility));
+      return newVisibility;
+    });
+  };
+
+  // Filter options
   const statusOptions = Array.from(
     new Set(
       articlesRaw
         .map((article) => article.status)
-        .filter((s) => s && s !== "Unknown")
+        .filter((status) => status && status !== "Unknown")
     )
   );
 
+  const practiceOptions = Array.from(
+    new Set(
+      articlesRaw
+        .flatMap((article) => article.practice || [])
+        .filter((practice) => practice && practice !== "N/A")
+    )
+  );
+
+  const claimOptions = useMemo(() => {
+    if (selectedPractice === "All") {
+      return [];
+    }
+    const practiceClaims = new Set<string>();
+    articlesRaw.forEach((article) => {
+      if (
+        article.practice &&
+        article.practice.includes(selectedPractice) &&
+        article.claim
+      ) {
+        article.claim.split(",").forEach((claim) => {
+          practiceClaims.add(claim.trim());
+        });
+      }
+    });
+    return Array.from(practiceClaims).filter((c) => c.length > 0);
+  }, [articlesRaw, selectedPractice]);
+
+  // Year validation
   const validateYears = (start: string, end: string): boolean => {
     const startNum = parseInt(start);
     const endNum = parseInt(end);
@@ -250,34 +316,55 @@ export default function ArticlesPage() {
       setErrorMessage("End year cannot be earlier than start year");
       return false;
     }
-
-    if (startNum < 1900 || endNum > new Date().getFullYear()) {
+    if (
+      (start && startNum < 1900) ||
+      (end && endNum > new Date().getFullYear())
+    ) {
       setErrorMessage("Years must be between 1900 and current year");
       return false;
     }
-
     setErrorMessage("");
     return true;
   };
 
+  useEffect(() => {
+    if (startYear || endYear) {
+      validateYears(startYear, endYear);
+    } else {
+      setErrorMessage("");
+    }
+  }, [startYear, endYear]);
+
+  useEffect(() => {
+    setSelectedClaim("All");
+  }, [selectedPractice]);
+
+  // Filtering and sorting
   const filteredData = articlesRaw
     .filter((article) => {
       const matchesStatus =
         selectedStatus === "All" || article.status === selectedStatus;
+      const matchesPractice =
+        selectedPractice === "All" ||
+        (article.practice && article.practice.includes(selectedPractice));
+      const matchesClaim =
+        selectedClaim === "All" ||
+        (article.claim &&
+          article.claim
+            .split(",")
+            .map((c) => c.trim())
+            .includes(selectedClaim));
       const pubYear = article.published_date
         ? parseInt(article.published_date)
         : 0;
-
       let matchesYear = true;
       if (startYear && endYear) {
         matchesYear =
           pubYear >= parseInt(startYear) && pubYear <= parseInt(endYear);
       }
-
       const authorString = Array.isArray(article.author)
         ? article.author.join(", ")
         : article.author || "Unknown Author";
-
       const matchesSearch =
         article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         authorString.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -286,7 +373,13 @@ export default function ArticlesPage() {
             .toLowerCase()
             .includes(searchQuery.toLowerCase()));
 
-      return matchesStatus && matchesYear && matchesSearch;
+      return (
+        matchesStatus &&
+        matchesPractice &&
+        matchesClaim &&
+        matchesYear &&
+        matchesSearch
+      );
     })
     .sort((a, b) =>
       sortOrder === "asc"
@@ -294,7 +387,7 @@ export default function ArticlesPage() {
         : (parseInt(b.published_date) || 0) - (parseInt(a.published_date) || 0)
     );
 
-  // Extend the headers to include a new “Rating” column
+  // Table headers
   const headers = [
     { key: "title", label: "Title" },
     { key: "author", label: "Author" },
@@ -302,9 +395,10 @@ export default function ArticlesPage() {
     { key: "publisher", label: "Publisher" },
     { key: "status", label: "Status" },
     { key: "journal", label: "Journal" },
-    // <-- replaced the raw “rating” column with our custom rating UI below:
     { key: "rating_ui", label: "Rating" },
     { key: "moderatedBy", label: "Moderated By" },
+    { key: "practice", label: "Practice" },
+    { key: "claim", label: "Claims" },
   ];
 
   if (loading) {
@@ -333,9 +427,42 @@ export default function ArticlesPage() {
           className="px-3 py-2 rounded border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white"
         >
           <option value="All">All Statuses</option>
-          {statusOptions.map((status) => (
-            <option key={status} value={status}>
+          {statusOptions.map((status, index) => (
+            <option key={`status-${index}`} value={status}>
               {status}
+            </option>
+          ))}
+        </select>
+
+        <select
+          value={selectedPractice}
+          onChange={(e) => setSelectedPractice(e.target.value)}
+          className="px-3 py-2 rounded border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white"
+        >
+          <option value="All">All Practices</option>
+          {practiceOptions.map((practice, index) => (
+            <option key={`practice-${index}`} value={practice}>
+              {practice}
+            </option>
+          ))}
+        </select>
+
+        <select
+          value={selectedClaim}
+          onChange={(e) => setSelectedClaim(e.target.value)}
+          disabled={selectedPractice === "All" || claimOptions.length === 0}
+          className="px-3 py-2 rounded border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white"
+        >
+          <option value="All">
+            {selectedPractice === "All"
+              ? "Select a practice first"
+              : claimOptions.length === 0
+              ? "No claims for this practice"
+              : "All Claims"}
+          </option>
+          {claimOptions.map((claim, index) => (
+            <option key={`claim-${index}`} value={claim}>
+              {claim}
             </option>
           ))}
         </select>
@@ -369,6 +496,12 @@ export default function ArticlesPage() {
           <option value="asc">Oldest First</option>
           <option value="desc">Newest First</option>
         </select>
+
+        <ColumnSelector
+          headers={headers}
+          visibleColumns={visibleColumns}
+          onToggle={toggleColumnVisibility}
+        />
       </div>
 
       {errorMessage && <div className="error-message">{errorMessage}</div>}
@@ -388,14 +521,13 @@ export default function ArticlesPage() {
           headers={headers}
           data={filteredData.map((article) => ({
             ...article,
-            // We inject two extra fields so that SortableTable can render them:
+            practice: article.practice?.join(", ") || "N/A",
             rating_ui: (
               <div>
                 {/* Dropdown for selecting 1–5 stars */}
                 <select
                   value={userRatings[article._id] ?? ""}
                   onChange={(e: ChangeEvent<HTMLSelectElement>) => {
-                    // If user clears the select (""), do nothing
                     const val =
                       e.target.value === "" ? null : Number(e.target.value);
                     if (val !== null) {
@@ -403,7 +535,6 @@ export default function ArticlesPage() {
                     }
                   }}
                 >
-                  {/* If user has not rated yet, we show an empty option first */}
                   <option value="">Your Rating</option>
                   {[1, 2, 3, 4, 5].map((n) => (
                     <option key={n} value={n}>
@@ -411,8 +542,6 @@ export default function ArticlesPage() {
                     </option>
                   ))}
                 </select>
-
-                {/* Display average + count below */}
                 <div style={{ fontSize: "0.8em", marginTop: "4px" }}>
                   Avg:{" "}
                   {ratingSummaries[article._id]
