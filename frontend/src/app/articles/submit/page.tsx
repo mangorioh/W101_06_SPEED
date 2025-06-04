@@ -42,6 +42,7 @@ const SubmitArticlePage = () => {
         setNumber(entry.number || "");
         setPages(entry.pages || "");
         setDoi(entry.doi || "");
+        setPublisher(entry.publisher?.replace(/[{}]/g, "") || "");
       } catch (err) {
         console.error(err);
         alert("Failed to parse BibTeX file: " + (err as Error).message);
@@ -59,6 +60,7 @@ const SubmitArticlePage = () => {
   const [number, setNumber] = useState("");
   const [pages, setPages] = useState("");
   const [doi, setDoi] = useState("");
+  const [publisher, setPublisher] = useState(""); // new publisher state
   const [username, setUsername] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -151,6 +153,7 @@ const SubmitArticlePage = () => {
           // if pages are stored as a string in your schema, include them as-is:
           pages,
           DOI: doi,
+          publisher: publisher || undefined, // include publisher if provided
           submitter: username,
           // new fields:
           practice: selectedPractices,
@@ -281,6 +284,20 @@ const SubmitArticlePage = () => {
             id="journal"
             value={journal}
             onChange={(e) => setJournal(e.target.value)}
+            className="w-full border border-gray-300 rounded p-2"
+          />
+        </div>
+
+        {/* publisher*/}
+        <div>
+          <label htmlFor="publisher" className="block font-medium">
+            Publisher
+          </label>
+          <input
+            type="text"
+            id="publisher"
+            value={publisher}
+            onChange={(e) => setPublisher(e.target.value)}
             className="w-full border border-gray-300 rounded p-2"
           />
         </div>
