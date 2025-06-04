@@ -29,12 +29,12 @@ describe('ModerationService', () => {
       const mockModerator = 'mod1';
 
       // Explicitly type the mock article to avoid 'any'
+      const mockModeratedDate = new Date();
       const mockUpdatedArticle: Partial<Article> = {
         status: 'rejected',
         reason_for_decision: mockReason,
         moderatedBy: mockModerator,
-        moderated_date: new Date(),
-        rating: 0,
+        moderated_date: mockModeratedDate,
       };
 
       articleService.update!.mockResolvedValue(mockUpdatedArticle);
@@ -50,7 +50,7 @@ describe('ModerationService', () => {
         status: 'rejected',
         reason_for_decision: mockReason,
         moderatedBy: mockModerator,
-        moderated_date: expect.any(Date) as Date,
+        moderated_date: mockModeratedDate,
         rating: 0,
       });
 
