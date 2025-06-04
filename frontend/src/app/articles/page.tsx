@@ -44,10 +44,8 @@ export default function ArticlesPage() {
     {}
   );
 
-  // Helper: retrieve JWT. ADJUST this if you store your token elsewhere.
   const getJwt = () => {
-    return localStorage.getItem("access_token"); 
-    // — If you’re using HttpOnly cookies instead, remove this and ensure fetch() uses `credentials: "include"`.
+    return localStorage.getItem("token");
   };
 
   useEffect(() => {
@@ -57,12 +55,9 @@ export default function ArticlesPage() {
           "http://localhost:3000/articles" +
           (searchQuery ? `?search=${encodeURIComponent(searchQuery)}` : "");
         const response = await fetch(url, {
-          // If you store your JWT as a Bearer token, we attach it here:
           headers: {
             Authorization: `Bearer ${getJwt() ?? ""}`,
           },
-          // If your JWT is in an HttpOnly cookie, do this instead:
-          // credentials: "include",
         });
 
         if (!response.ok) {
@@ -72,7 +67,6 @@ export default function ArticlesPage() {
         }
 
         const data = await response.json();
-        // Process “raw” dates and authors exactly as you did before:
         const processedData = data.map((article: any) => {
           const formatDate = (dateString: string | { $date: string }) => {
             try {
@@ -126,7 +120,10 @@ export default function ArticlesPage() {
     const fetchRatingsForAll = async () => {
       const jwt = getJwt() ?? "";
       // We’ll build new copies of these two maps, then setState once.
-      const newSummaries: Record<string, { averageRating: number; ratingCount: number }> = {};
+      const newSummaries: Record<
+        string,
+        { averageRating: number; ratingCount: number }
+      > = {};
       const newUserRatings: Record<string, number | null> = {};
 
       // We can do them in parallel:
@@ -169,9 +166,17 @@ export default function ArticlesPage() {
               }
             );
             if (userRatingResp.ok) {
-              const val = await userRatingResp.json();
-              // Service returns a bare number or null
-              newUserRatings[aId] = val === null ? null : Number(val);
+              if (userRatingResp.status === 204) {
+                newUserRatings[aId] = null;
+              } else {
+                const text = await userRatingResp.text();
+                if (!text) {
+                  newUserRatings[aId] = null;
+                } else {
+                  const val = JSON.parse(text);
+                  newUserRatings[aId] = val === null ? null : Number(val);
+                }
+              }
             } else {
               newUserRatings[aId] = null;
             }
@@ -190,10 +195,7 @@ export default function ArticlesPage() {
   }, [loading, articlesRaw]);
 
   // Helper to call the PUT endpoint when user changes rating
-  const handleRatingChange = async (
-    articleId: string,
-    newValue: number
-  ) => {
+  const handleRatingChange = async (articleId: string, newValue: number) => {
     const jwt = getJwt() ?? "";
     try {
       const resp = await fetch(
@@ -234,7 +236,9 @@ export default function ArticlesPage() {
   // Filter / sort logic exactly as before, except that now each article uses ratingSummaries + userRatings instead of article.rating
   const statusOptions = Array.from(
     new Set(
-      articlesRaw.map((article) => article.status).filter((s) => s && s !== "Unknown")
+      articlesRaw
+        .map((article) => article.status)
+        .filter((s) => s && s !== "Unknown")
     )
   );
 
@@ -258,12 +262,16 @@ export default function ArticlesPage() {
 
   const filteredData = articlesRaw
     .filter((article) => {
-      const matchesStatus = selectedStatus === "All" || article.status === selectedStatus;
-      const pubYear = article.published_date ? parseInt(article.published_date) : 0;
+      const matchesStatus =
+        selectedStatus === "All" || article.status === selectedStatus;
+      const pubYear = article.published_date
+        ? parseInt(article.published_date)
+        : 0;
 
       let matchesYear = true;
       if (startYear && endYear) {
-        matchesYear = pubYear >= parseInt(startYear) && pubYear <= parseInt(endYear);
+        matchesYear =
+          pubYear >= parseInt(startYear) && pubYear <= parseInt(endYear);
       }
 
       const authorString = Array.isArray(article.author)
@@ -274,7 +282,9 @@ export default function ArticlesPage() {
         article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         authorString.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (article.description &&
-          article.description.toLowerCase().includes(searchQuery.toLowerCase()));
+          article.description
+            .toLowerCase()
+            .includes(searchQuery.toLowerCase()));
 
       return matchesStatus && matchesYear && matchesSearch;
     })
@@ -317,7 +327,10 @@ export default function ArticlesPage() {
           className="search-input"
         />
 
-        <select value={selectedStatus} onChange={(e) => setSelectedStatus(e.target.value)}>
+        <select
+          value={selectedStatus}
+          onChange={(e) => setSelectedStatus(e.target.value)}
+        >
           <option value="All">All Statuses</option>
           {statusOptions.map((status) => (
             <option key={status} value={status}>
@@ -345,7 +358,10 @@ export default function ArticlesPage() {
           />
         </div>
 
-        <select value={sortOrder} onChange={(e) => setSortOrder(e.target.value as "asc" | "desc")}>
+        <select
+          value={sortOrder}
+          onChange={(e) => setSortOrder(e.target.value as "asc" | "desc")}
+        >
           <option value="asc">Oldest First</option>
           <option value="desc">Newest First</option>
         </select>
@@ -354,10 +370,14 @@ export default function ArticlesPage() {
       {errorMessage && <div className="error-message">{errorMessage}</div>}
 
       {filteredData.length === 0 && searchQuery && (
-        <div className="no-results">No articles found matching "{searchQuery}"</div>
+        <div className="no-results">
+          No articles found matching "{searchQuery}"
+        </div>
       )}
 
-      {filteredData.length === 0 && !searchQuery && <div className="no-results">No articles found</div>}
+      {filteredData.length === 0 && !searchQuery && (
+        <div className="no-results">No articles found</div>
+      )}
 
       {filteredData.length > 0 && (
         <SortableTable
@@ -372,7 +392,8 @@ export default function ArticlesPage() {
                   value={userRatings[article._id] ?? ""}
                   onChange={(e: ChangeEvent<HTMLSelectElement>) => {
                     // If user clears the select (""), do nothing
-                    const val = e.target.value === "" ? null : Number(e.target.value);
+                    const val =
+                      e.target.value === "" ? null : Number(e.target.value);
                     if (val !== null) {
                       handleRatingChange(article._id, val);
                     }
@@ -393,8 +414,8 @@ export default function ArticlesPage() {
                   {ratingSummaries[article._id]
                     ? ratingSummaries[article._id].averageRating.toFixed(1)
                     : "0.0"}{" "}
-                  ({ratingSummaries[article._id]?.ratingCount ?? 0}{" "}
-                  vote{(ratingSummaries[article._id]?.ratingCount ?? 0) === 1
+                  ({ratingSummaries[article._id]?.ratingCount ?? 0} vote
+                  {(ratingSummaries[article._id]?.ratingCount ?? 0) === 1
                     ? ""
                     : "s"}
                   )

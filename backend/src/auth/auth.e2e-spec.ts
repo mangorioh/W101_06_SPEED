@@ -3,13 +3,13 @@ import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
-import * as bcrypt from 'bcryptjs'; // <-- Add this import
+import * as bcrypt from 'bcryptjs';
+import { ConflictException } from '@nestjs/common';
 
 describe('Auth (e2e)', () => {
   let authService: AuthService;
   let usersService: Partial<Record<keyof UsersService, jest.Mock>>;
   let jwtService: Partial<Record<keyof JwtService, jest.Mock>>;
-  //let authController: AuthController;
 
   beforeEach(async () => {
     usersService = {
@@ -30,7 +30,6 @@ describe('Auth (e2e)', () => {
     }).compile();
 
     authService = module.get<AuthService>(AuthService);
-    //authController = module.get<AuthController>(AuthController);
   });
 
   describe('register', () => {
@@ -49,15 +48,15 @@ describe('Auth (e2e)', () => {
         'testuser',
         'password123',
       );
-      expect(result).toMatchObject({ username: 'testuser', role: 'user' });
+      expect(result).toMatchObject({ username: 'testuser', role: 'user', _id: 'user123' });
       expect(result).not.toHaveProperty('password');
     });
 
-    it('should throw if username exists', async () => {
+    it('should throw ConflictException if username exists', async () => {
       usersService.findOne!.mockResolvedValue({ username: 'testuser' });
       await expect(
         authService.register('testuser', 'password123'),
-      ).rejects.toThrow('Username already exists');
+      ).rejects.toThrow(ConflictException);
     });
   });
 
@@ -65,19 +64,21 @@ describe('Auth (e2e)', () => {
     it('should return user data if credentials are valid', async () => {
       (jest.spyOn(bcrypt, 'compare') as jest.Mock).mockResolvedValue(true);
       usersService.findOne!.mockResolvedValue({
+        _id: 'user123',
         username: 'testuser',
         password: 'hashed',
         role: 'user',
       });
 
       const result = await authService.validateUser('testuser', 'password123');
-      expect(result).toMatchObject({ username: 'testuser', role: 'user' });
+      expect(result).toMatchObject({ username: 'testuser', role: 'user', _id: 'user123' });
       expect(result).not.toHaveProperty('password');
     });
 
     it('should return null if credentials are invalid', async () => {
       (jest.spyOn(bcrypt, 'compare') as jest.Mock).mockResolvedValue(false);
       usersService.findOne!.mockResolvedValue({
+        _id: 'user123',
         username: 'testuser',
         password: 'hashed',
         role: 'user',
@@ -91,11 +92,12 @@ describe('Auth (e2e)', () => {
   describe('login', () => {
     it('should return an access token', () => {
       const user = {
+        _id: 'user123',
         username: 'testuser',
         password: 'hashed',
         role: 'user',
       };
-      const result = authService.login(user);
+      const result = authService.login(user as any);
       expect(result).toEqual({ access_token: 'mocked.jwt.token' });
       expect(jwtService.sign).toHaveBeenCalledWith({
         username: 'testuser',
@@ -104,29 +106,4 @@ describe('Auth (e2e)', () => {
       });
     });
   });
-
-  /*  describe('AuthController', () => {
-      it('should call register via controller', async () => {
-        const dto = { username: 'testuser', password: 'password123' };
-        jest
-          .spyOn(authService, 'register')
-          .mockResolvedValue({ username: 'testuser', role: 'user' });
-        const result = await authController.register(dto as any);
-        expect(result).toEqual({ username: 'testuser', role: 'user' });
-      });
-  
-      it('should call login via controller', async () => {
-        const req = {
-          user: { _doc: { _id: 'user123', username: 'testuser', role: 'user' } },
-        };
-        jest
-          .spyOn(authService, 'login')
-          .mockResolvedValue({ access_token: 'mocked.jwt.token' });
-        const result = await authController.login(req as any, {
-          username: 'testuser',
-          password: 'password123',
-        });
-        expect(result).toEqual({ access_token: 'mocked.jwt.token' });
-      });
-    });*/
 });

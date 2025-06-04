@@ -22,7 +22,7 @@ export default function UserProfilePage() {
       return;
     }
 
-    fetch("http://localhost:3000/user/me", {
+    fetch("http://localhost:3000/users/me", {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then(async (res) => {
