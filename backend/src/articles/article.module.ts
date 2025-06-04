@@ -11,7 +11,7 @@ import { RatingService } from 'src/ratings/rating.service';
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: Article.name, schema: ArticleSchema }]),
-    forwardRef(() => ModerationModule)
+    forwardRef(() => ModerationModule),
 
     MongooseModule.forFeature([{ name: Rating.name, schema: RatingSchema }]),
 
@@ -20,4 +20,4 @@ import { RatingService } from 'src/ratings/rating.service';
   providers: [ArticleService, RatingService],
   exports: [ArticleService],
 })
-export class ArticleModule {}
+export class ArticleModule { }

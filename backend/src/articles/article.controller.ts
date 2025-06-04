@@ -26,6 +26,16 @@ export class ArticleController {
     return this.articleService.create(createArticleDto);
   }
 
+  @Get('practices')
+  async getPractices() {
+    return this.articleService.getDistinctPractices();
+  }
+
+  @Get('claims/:practice')
+  async getClaims(@Param('practice') practice: string) {
+    return this.articleService.getClaimsForPractice(practice);
+  }
+
   @Get()
   findAll() {
     return this.articleService.findAll();
@@ -41,5 +51,7 @@ export class ArticleController {
   @Put(':id')
   update(@Param('id') id: string, @Body() updateArticleDto: UpdateArticleDto) {
     return this.articleService.update(id, updateArticleDto);
+
+    
   }
 }

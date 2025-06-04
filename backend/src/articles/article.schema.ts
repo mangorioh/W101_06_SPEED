@@ -67,6 +67,20 @@ export class Article {
 
   @Prop()
   practice: string[];
+
+  @Prop()
+  claim?: string; 
+
+  @Prop()
+  resultOfEvidence: string;
+
+  @Prop()
+  typeOfResearch: string;
+
+  @Prop([String])
+  typeOfParticipant: string[];
+
+  
 }
 
 export const ArticleSchema = SchemaFactory.createForClass(Article);

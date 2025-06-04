@@ -20,4 +20,5 @@ export class CreateArticleDto {
   rating_sum: number;
   rating_count: number;
   practice: string[];
+  claim?: string; 
 }
