@@ -29,7 +29,7 @@ const NavComponent: React.FC<NavComponentProps> = ({
       )}
       {hasChildren && (
         <div
-          className={`absolute top-full p-2 space-y-2 shadow-md rounded-md bg-blue-950 z-10 hidden group-hover:block group-focus-within:block`}
+          className={`absolute top-full right-0 p-2 space-y-2 shadow-md rounded-md bg-blue-950 z-10 hidden group-hover:block group-focus-within:block min-w-max whitespace-nowrap`}
         >
           {children}
         </div>
