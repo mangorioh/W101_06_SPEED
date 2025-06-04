@@ -13,7 +13,7 @@ const NavBar = () => {
       // if no ones logged in, then they are not a mod or owner
       setRole(null);
     } else {
-      fetch("http://localhost:3000/users/me", {
+      fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/users/me`, {
         headers: { Authorization: `Bearer ${token}` },
       })
         // any error in the fetch will just assume the user is not logged in
@@ -36,7 +36,7 @@ const NavBar = () => {
       <Link href="/" className="font-bold text-xl ml-2">
         SPEED
       </Link>
-      <div className="flex space-x-2">
+      <div className="flex space-x-2 pr-10">
         <NavComponent href="/" label="Home" />
         {(role === "mod" || role === "owner") && (
           <NavComponent label="Moderation">

@@ -85,7 +85,7 @@ const SubmitArticlePage = () => {
       })
     );
 
-    await fetch("http://localhost:3000/articles", {
+    await fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/articles`, {
       // Your NestJS URL
       method: "POST",
       headers: {

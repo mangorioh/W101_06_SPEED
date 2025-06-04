@@ -18,7 +18,7 @@ const ModerateArticlesPage = () => {
   const [rejectReason, setRejectReason] = useState<string>("");
 
   const fetchArticles = async () => {
-    const res = await fetch("http://localhost:3000/articles");
+    const res = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/articles`);
     const data = await res.json();
     const pending = data.filter(
       (article: Article) => article.status === "pending"
@@ -32,7 +32,7 @@ const ModerateArticlesPage = () => {
 
   const handleApprove = async (id: string) => {
     setLoadingId(id);
-    await fetch(`http://localhost:3000/articles/${id}`, {
+    await fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/articles/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status: "approved" }),
@@ -46,7 +46,7 @@ const ModerateArticlesPage = () => {
 
     setLoadingId(id);
 
-    await fetch(`http://localhost:3000/moderation/${id}/reject`, {
+    await fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/moderation/${id}/reject`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

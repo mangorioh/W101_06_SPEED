@@ -20,7 +20,7 @@ export default function OwnerUsersPage() {
   const fetchUsers = () => {
     const token =
       typeof window !== "undefined" ? localStorage.getItem("token") : null;
-    fetch("http://localhost:3000/users", {
+    fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/users`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then(async (res) => {
@@ -54,7 +54,7 @@ export default function OwnerUsersPage() {
     setUpdating(userId);
     const token =
       typeof window !== "undefined" ? localStorage.getItem("token") : null;
-    await fetch(`http://localhost:3000/users/${userId}/role`, {
+    await fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/users/${userId}/role`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
@@ -71,7 +71,7 @@ export default function OwnerUsersPage() {
     setUpdating(userId);
     const token =
       typeof window !== "undefined" ? localStorage.getItem("token") : null;
-    await fetch(`http://localhost:3000/users/${userId}`, {
+    await fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/users/${userId}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -89,10 +89,13 @@ export default function OwnerUsersPage() {
     setUpdating(userId);
     const token =
       typeof window !== "undefined" ? localStorage.getItem("token") : null;
-    await fetch(`http://localhost:3000/users/${userId}/invalidate-password`, {
-      method: "PATCH",
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    await fetch(
+      `${process.env.NEXT_PUBLIC_SITE_URL}/users/${userId}/invalidate-password`,
+      {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
     fetchUsers();
     setUpdating(null);
   };

@@ -20,13 +20,16 @@ const RegisterPage: React.FC = () => {
     const registerData = { username, password };
 
     try {
-      const response = await fetch("http://localhost:3000/auth/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(registerData),
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_SITE_URL}/auth/register`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(registerData),
+        }
+      );
 
       if (response.ok) {
         const data = await response.json();

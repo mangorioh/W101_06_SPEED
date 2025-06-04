@@ -22,7 +22,9 @@ const RejectArticlePage = () => {
   useEffect(() => {
     const fetchArticles = async () => {
       try {
-        const res = await fetch("http://localhost:3000/moderation/rejects");
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_SITE_URL}/moderation/rejects`
+        );
         const data = await res.json();
         console.log("Fetched articles:", data);
         setArticles(Array.isArray(data) ? data : []);

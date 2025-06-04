@@ -52,7 +52,7 @@ export default function ArticlesPage() {
     const fetchArticles = async () => {
       try {
         const url =
-          "http://localhost:3000/articles" +
+          `${process.env.NEXT_PUBLIC_SITE_URL}/articles` +
           (searchQuery ? `?search=${encodeURIComponent(searchQuery)}` : "");
         const response = await fetch(url, {
           headers: {
@@ -133,7 +133,7 @@ export default function ArticlesPage() {
           try {
             // 1) Summary
             const summaryResp = await fetch(
-              `http://localhost:3000/articles/${aId}/rating/summary`,
+              `${process.env.NEXT_PUBLIC_SITE_URL}/articles/${aId}/rating/summary`,
               {
                 headers: {
                   Authorization: `Bearer ${jwt}`,
@@ -158,7 +158,7 @@ export default function ArticlesPage() {
           try {
             // 2) Current user's own rating
             const userRatingResp = await fetch(
-              `http://localhost:3000/articles/${aId}/rating`,
+              `${process.env.NEXT_PUBLIC_SITE_URL}/articles/${aId}/rating`,
               {
                 headers: {
                   Authorization: `Bearer ${jwt}`,
@@ -199,7 +199,7 @@ export default function ArticlesPage() {
     const jwt = getJwt() ?? "";
     try {
       const resp = await fetch(
-        `http://localhost:3000/articles/${articleId}/rating`,
+        `${process.env.NEXT_PUBLIC_SITE_URL}/articles/${articleId}/rating`,
         {
           method: "PUT",
           headers: {
