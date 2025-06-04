@@ -63,6 +63,7 @@ const NavBar = () => {
           <NavComponent href="/user/login" label="Login" />
           <NavComponent href="/user/register" label="Register" />
           <NavComponent href="/user/profile" label="Profile" />
+          <NavComponent href="/user/submissions" label="Submissions" />
         </NavComponent>
       </div>
     </nav>
