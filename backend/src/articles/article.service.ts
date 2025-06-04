@@ -50,6 +50,13 @@ export class ArticleService {
     return newArticle.save();
   }
 
+  async getDistinctPractices(): Promise<string[]> {
+    return this.articleModel.distinct('practice').exec();
+  }
+
+  async getClaimsForPractice(practice: string): Promise<string[]> {
+    return this.articleModel.distinct('claim', { practice }).exec();
+  }
   //Find all articles
   async findAll(): Promise<Article[]> {
     return this.articleModel.find().exec();
