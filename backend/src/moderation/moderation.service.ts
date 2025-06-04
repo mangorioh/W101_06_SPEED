@@ -6,7 +6,7 @@ export class ModerationService {
   constructor(
     @Inject(forwardRef(() => ArticleService))
     private readonly articleService: ArticleService
-  ) {}
+  ) { }
 
   //Get all articles with status 'pending'
   async getPendingArticles() {
@@ -61,5 +61,10 @@ export class ModerationService {
     return this.articleService.update(id, {
       status: 'removed',
     });
+  }
+
+  // Get all articles where the submitter matches a given string
+  async getArticlesBySubmitter(submitter: string) {
+    return this.articleService.findBySubmitter(submitter);
   }
 }

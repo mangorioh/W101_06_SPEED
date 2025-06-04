@@ -15,7 +15,7 @@ export class ArticleService {
     @InjectModel(Article.name) private articleModel: Model<Article>,
     @Inject(forwardRef(() => ModerationService))
     private moderationService: ModerationService,
-  ) {}
+  ) { }
 
   //Run create DTO
   async create(createArticleDto: CreateArticleDto): Promise<Article> {
@@ -75,5 +75,10 @@ export class ArticleService {
     return this.articleModel
       .findByIdAndUpdate(id, updateArticleDto, { new: true })
       .exec();
+  }
+
+  // Find all articles by submitter
+  async findBySubmitter(submitter: string): Promise<Article[]> {
+    return this.articleModel.find({ submitter }).exec();
   }
 }

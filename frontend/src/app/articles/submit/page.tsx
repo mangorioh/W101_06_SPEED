@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useState, useEffect } from "react";
 import bibtexParse from "bibtex-parse-js";
 
 const SubmitArticlePage = () => {
@@ -56,6 +56,33 @@ const SubmitArticlePage = () => {
   const [number, setNumber] = useState("");
   const [pages, setPages] = useState("");
   const [doi, setDoi] = useState("");
+  const [username, setUsername] = useState<string | null>(null);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  // Fetch logged-in user's username
+  useEffect(() => {
+    const token =
+      typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    if (!token) {
+      window.location.href = "/user/login";
+      return;
+    }
+    fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/users/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(async (res) => {
+        if (res.status === 401 || res.status === 403) {
+          window.location.href = "/user/login";
+          return;
+        }
+        const data = await res.json();
+        setUsername(data.username);
+      })
+      .catch(() => {
+        window.location.href = "/user/login";
+      });
+  }, []);
 
   const submitNewArticle = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -71,37 +98,43 @@ const SubmitArticlePage = () => {
       );
       return;
     }
-
-    console.log(
-      JSON.stringify({
-        title,
-        author,
-        journal,
-        publication_year: pubYear,
-        volume,
-        number,
-        pages,
-        doi,
-      })
-    );
-
-    await fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/articles`, {
-      // Your NestJS URL
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        title,
-        author,
-        journal,
-        publication_year: pubYear,
-        volume,
-        number,
-        pages,
-        doi,
-      }),
-    });
+    const token =
+      typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    if (!token || !username) {
+      alert("You must be logged in to submit an article.");
+      return;
+    }
+    setSubmitSuccess(false);
+    setSubmitError(null);
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/articles`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          title,
+          author,
+          journal,
+          publication_year: pubYear,
+          volume,
+          number,
+          pages,
+          doi,
+          submitter: username,
+        }),
+      });
+      if (!response.ok) {
+        const errorText = await response.text();
+        setSubmitError(errorText || "Failed to submit article.");
+        return;
+      }
+      setSubmitSuccess(true);
+      // Optionally clear form fields here
+    } catch (err: any) {
+      setSubmitError(err.message || "Failed to submit article.");
+    }
   };
 
   const addAuthor = () => setauthor([...author, ""]);
@@ -113,6 +146,16 @@ const SubmitArticlePage = () => {
   return (
     <div className="max-w-2xl mx-auto p-6">
       <h1 className="text-2xl font-bold mb-6">Submit New Article</h1>
+      {submitSuccess && (
+        <div className="mb-4 p-3 bg-green-100 text-green-800 rounded border border-green-300">
+          Article submitted successfully!
+        </div>
+      )}
+      {submitError && (
+        <div className="mb-4 p-3 bg-red-100 text-red-800 rounded border border-red-300">
+          {submitError}
+        </div>
+      )}
 
       <div className="mb-4">
         <div className="flex items-center space-x-4">
