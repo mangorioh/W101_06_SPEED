@@ -10,16 +10,16 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { CreateUserDto } from './dto/create-user.dto';
-import { User } from '../users/user.schema';
+import { UserDocument } from '../users/user.schema';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(private authService: AuthService) { }
 
   @HttpCode(HttpStatus.OK)
   @UseGuards(AuthGuard('local'))
   @Post('login')
-  login(@Request() req: { user: User }) {
+  login(@Request() req: { user: UserDocument }) {
     // passport-local puts the validated user in req.user
     return this.authService.login(req.user);
   }

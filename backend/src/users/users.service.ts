@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, ConflictException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User, UserDocument } from './user.schema';
@@ -6,47 +6,82 @@ import * as bcrypt from 'bcryptjs';
 
 @Injectable()
 export class UsersService {
-  constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
+  constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) { }
 
-  async create(username: string, password_plain: string): Promise<User> {
-    const hashedPassword = await bcrypt.hash(password_plain, 10); // Hash the password
+  /**
+   * Create a new user. Throws ConflictException if username exists.
+   * Returns user data excluding password.
+   */
+  async create(
+    username: string,
+    password_plain: string
+  ): Promise<{ _id: any; username: string; role: string }> {
+    const existingUser = await this.userModel.findOne({ username }).exec();
+    if (existingUser) {
+      throw new ConflictException('Username already exists');
+    }
+    const hashedPassword = await bcrypt.hash(password_plain, 10);
     const createdUser = new this.userModel({
       username,
       password: hashedPassword,
+      role: 'user', // Default role
     });
-    return createdUser.save();
+    const savedUser = await createdUser.save();
+    // Return only safe fields
+    return {
+      _id: savedUser._id,
+      username: savedUser.username,
+      role: savedUser.role,
+    };
   }
 
-  async findOne(username: string): Promise<User | null> {
-    return this.userModel.findOne({ username }).exec();
+  /**
+   * Find a user by username. Excludes password by default.
+   */
+  async findOne(username: string): Promise<Omit<User, 'password'> | null> {
+    const user = await this.userModel.findOne({ username }).select('-password').exec();
+    return user;
   }
 
-  async findAll(): Promise<User[]> {
-    return this.userModel.find().select('-password').exec(); // Exclude password field
+  /**
+   * Find all users, excluding passwords.
+   */
+  async findAll(): Promise<Omit<User, 'password'>[]> {
+    return this.userModel.find().select('-password').exec();
   }
 
-  async findById(id: string): Promise<User | null> {
+  /**
+   * Find a user by ID, excluding password.
+   */
+  async findById(id: string): Promise<Omit<User, 'password'> | null> {
     return this.userModel.findById(id).select('-password').exec();
   }
 
+  /**
+   * Delete a user by ID.
+   */
   async deleteById(id: string): Promise<{ deleted: boolean }> {
     const result = await this.userModel.deleteOne({ _id: id }).exec();
     return { deleted: result.deletedCount === 1 };
   }
 
-  async updateRole(id: string, role: string): Promise<User | null> {
+  /**
+   * Update a user's role by ID, excluding password in response.
+   */
+  async updateRole(id: string, role: string): Promise<Omit<User, 'password'> | null> {
     return this.userModel
       .findByIdAndUpdate(id, { role }, { new: true })
       .select('-password')
       .exec();
   }
 
-  async invalidatePassword(id: string): Promise<User | null> {
-    // Set password to a random string the user will never know
-    const random = Math.random().toString(36).slice(2) + Date.now();
-    const hashed = await bcrypt.hash(random, 10);
+  /**
+   * Invalidate a user's password by setting it uncalculatable hash.
+   * Excludes password in response.
+   */
+  async invalidatePassword(id: string): Promise<Omit<User, 'password'> | null> {
     return this.userModel
-      .findByIdAndUpdate(id, { password: hashed }, { new: true })
+      .findByIdAndUpdate(id, { password: "!" }, { new: true })
       .select('-password')
       .exec();
   }
