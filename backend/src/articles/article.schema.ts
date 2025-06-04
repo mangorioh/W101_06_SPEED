@@ -69,7 +69,7 @@ export class Article {
   practice: string[];
 
   @Prop()
-  claim?: string; 
+  claim?: string[]; 
 
   @Prop()
   resultOfEvidence: string;

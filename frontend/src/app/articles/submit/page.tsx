@@ -3,6 +3,12 @@
 import { FormEvent, useState, useEffect } from "react";
 import bibtexParse from "bibtex-parse-js";
 
+type Entity = {
+  _id: string;
+  name: string;
+  valid: boolean;
+};
+
 const SubmitArticlePage = () => {
   //file upload
   const [file, setFile] = useState<File | null>(null);
@@ -11,22 +17,19 @@ const SubmitArticlePage = () => {
       setFile(e.target.files[0]);
     }
   };
-
   const handleUpload = () => {
     if (!file) return;
-
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
         const text = e.target?.result as string;
         const entries = bibtexParse.toJSON(text);
         if (!entries.length) throw new Error("No entries found");
-
         const entry = entries[0].entryTags;
 
         //map bibtex tags to form fields
         setTitle(entry.title?.replace(/[{}]/g, "") || "");
-        setauthor(
+        setAuthorList(
           entry.author
             ? entry.author
                 .split(/ and |,/i)
@@ -47,9 +50,9 @@ const SubmitArticlePage = () => {
     reader.readAsText(file);
   };
 
-  //fields
+  // main form fields
   const [title, setTitle] = useState("");
-  const [author, setauthor] = useState<string[]>([""]);
+  const [authorList, setAuthorList] = useState<string[]>([""]);
   const [journal, setJournal] = useState("");
   const [pubYear, setPubYear] = useState<number>(0);
   const [volume, setVolume] = useState("");
@@ -60,7 +63,15 @@ const SubmitArticlePage = () => {
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  // Fetch logged-in user's username
+  // new state for practices & claims
+  const [allPractices, setAllPractices] = useState<Entity[]>([]);
+  const [allClaims, setAllClaims] = useState<Entity[]>([]);
+  const [selectedPractices, setSelectedPractices] = useState<string[]>([]);
+  const [selectedClaims, setSelectedClaims] = useState<string[]>([]);
+
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL;
+
+  // fetch logged‐in user, plus practices & claims
   useEffect(() => {
     const token =
       typeof window !== "undefined" ? localStorage.getItem("token") : null;
@@ -68,7 +79,9 @@ const SubmitArticlePage = () => {
       window.location.href = "/user/login";
       return;
     }
-    fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/users/me`, {
+
+    // fetch username
+    fetch(`${baseUrl}/users/me`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then(async (res) => {
@@ -82,32 +95,47 @@ const SubmitArticlePage = () => {
       .catch(() => {
         window.location.href = "/user/login";
       });
+
+    // fetch practices
+    fetch(`${baseUrl}/practices`)
+      .then((res) => res.json())
+      .then((data: Entity[]) => setAllPractices(data))
+      .catch((err) => console.error("couldn't load practices", err));
+
+    // fetch claims
+    fetch(`${baseUrl}/claims`)
+      .then((res) => res.json())
+      .then((data: Entity[]) => setAllClaims(data))
+      .catch((err) => console.error("couldn't load claims", err));
   }, []);
 
   const submitNewArticle = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
+    // basic validation
     if (
       !title.trim() ||
-      author.some((a) => !a.trim()) ||
+      authorList.some((a) => !a.trim()) ||
       !journal.trim() ||
       !doi.trim()
     ) {
       alert(
-        "Please fill in all required fields: Title, Author(s), Journal, and DOI."
+        "please fill in required fields: title, author(s), journal, and doi."
       );
       return;
     }
     const token =
       typeof window !== "undefined" ? localStorage.getItem("token") : null;
     if (!token || !username) {
-      alert("You must be logged in to submit an article.");
+      alert("you must be logged in to submit.");
       return;
     }
+
     setSubmitSuccess(false);
     setSubmitError(null);
+
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/articles`, {
+      const response = await fetch(`${baseUrl}/articles`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -115,40 +143,59 @@ const SubmitArticlePage = () => {
         },
         body: JSON.stringify({
           title,
-          author,
+          author: authorList,
           journal,
-          publication_year: pubYear,
+          published_date: pubYear ? new Date(pubYear, 0).toISOString() : undefined,
           volume,
-          number,
+          number: number ? parseInt(number, 10) : undefined,
+          // if pages are stored as a string in your schema, include them as-is:
           pages,
-          doi,
+          DOI: doi,
           submitter: username,
+          // new fields:
+          practice: selectedPractices,
+          claim: selectedClaims,
         }),
       });
+
       if (!response.ok) {
         const errorText = await response.text();
-        setSubmitError(errorText || "Failed to submit article.");
+        setSubmitError(errorText || "failed to submit article");
         return;
       }
+
       setSubmitSuccess(true);
-      // Optionally clear form fields here
+      // optionally clear form fields here
     } catch (err: any) {
-      setSubmitError(err.message || "Failed to submit article.");
+      setSubmitError(err.message || "failed to submit article");
     }
   };
 
-  const addAuthor = () => setauthor([...author, ""]);
+  const addAuthor = () => setAuthorList([...authorList, ""]);
   const removeAuthor = (index: number) =>
-    setauthor(author.filter((_, i) => i !== index));
+    setAuthorList(authorList.filter((_, i) => i !== index));
   const changeAuthor = (index: number, value: string) =>
-    setauthor(author.map((author, i) => (i === index ? value : author)));
+    setAuthorList(authorList.map((a, i) => (i === index ? value : a)));
+
+  // toggle selection for practices & claims
+  const togglePractice = (id: string) => {
+    setSelectedPractices((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
+  const toggleClaim = (id: string) => {
+    setSelectedClaims((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
 
   return (
     <div className="max-w-2xl mx-auto p-6">
       <h1 className="text-2xl font-bold mb-6">Submit New Article</h1>
+
       {submitSuccess && (
         <div className="mb-4 p-3 bg-green-100 text-green-800 rounded border border-green-300">
-          Article submitted successfully!
+          article submitted successfully!
         </div>
       )}
       {submitError && (
@@ -157,6 +204,7 @@ const SubmitArticlePage = () => {
         </div>
       )}
 
+      {/* bibtex uploader */}
       <div className="mb-4">
         <div className="flex items-center space-x-4">
           <input
@@ -166,19 +214,22 @@ const SubmitArticlePage = () => {
             accept=".bib"
             onChange={handleFileChange}
           />
-          <button type="button" onClick={handleUpload}>
+          <button
+            type="button"
+            onClick={handleUpload}
+            className="px-3 py-1 bg-blue-600 text-white rounded"
+          >
             Upload
           </button>
         </div>
-        <span className="text-sm text-gray-600">
-          Or enter details manually:
-        </span>
+        <span className="text-sm text-gray-600">or enter details manually:</span>
       </div>
 
       <form onSubmit={submitNewArticle} className="space-y-4">
+        {/* title */}
         <div>
           <label htmlFor="title" className="block font-medium">
-            Title <span className="text-xs">Required</span>
+            Title <span className="text-xs">(required)</span>
           </label>
           <input
             type="text"
@@ -189,31 +240,41 @@ const SubmitArticlePage = () => {
           />
         </div>
 
+        {/* authors */}
         <div>
           <label className="block font-medium">
-            Author(s) <span className="text-xs">Required</span>
+            Author(s) <span className="text-xs">(required)</span>
           </label>
-          {author.map((author, index) => (
-            <div key={index} className="flex space-x-2 mb-2">
+          {authorList.map((a, idx) => (
+            <div key={idx} className="flex space-x-2 mb-2">
               <input
                 type="text"
-                value={author}
-                onChange={(e) => changeAuthor(index, e.target.value)}
+                value={a}
+                onChange={(e) => changeAuthor(idx, e.target.value)}
                 className="flex-1 border border-gray-300 rounded p-2"
               />
-              <button type="button" onClick={() => removeAuthor(index)}>
+              <button
+                type="button"
+                onClick={() => removeAuthor(idx)}
+                className="px-2 text-red-600"
+              >
                 &minus;
               </button>
             </div>
           ))}
-          <button type="button" onClick={addAuthor} className=" font-semibold">
+          <button
+            type="button"
+            onClick={addAuthor}
+            className="font-semibold text-blue-600"
+          >
             + Add Author
           </button>
         </div>
 
+        {/* journal */}
         <div>
           <label htmlFor="journal" className="block font-medium">
-            Journal <span className="text-xs">Required</span>
+            Journal <span className="text-xs">(required)</span>
           </label>
           <input
             type="text"
@@ -224,9 +285,10 @@ const SubmitArticlePage = () => {
           />
         </div>
 
+        {/* publication year */}
         <div>
           <label htmlFor="pubYear" className="block font-medium">
-            Publication Year <span className="text-xs">Required</span>
+            Publication Year <span className="text-xs">(required)</span>
           </label>
           <input
             type="number"
@@ -237,6 +299,7 @@ const SubmitArticlePage = () => {
           />
         </div>
 
+        {/* volume */}
         <div>
           <label htmlFor="volume" className="block font-medium">
             Volume
@@ -250,6 +313,7 @@ const SubmitArticlePage = () => {
           />
         </div>
 
+        {/* number */}
         <div>
           <label htmlFor="number" className="block font-medium">
             Number
@@ -263,6 +327,7 @@ const SubmitArticlePage = () => {
           />
         </div>
 
+        {/* pages */}
         <div>
           <label htmlFor="pages" className="block font-medium">
             Pages
@@ -276,9 +341,10 @@ const SubmitArticlePage = () => {
           />
         </div>
 
+        {/* doi */}
         <div>
           <label htmlFor="doi" className="block font-medium">
-            DOI <span className="text-xs">Required</span>
+            DOI <span className="text-xs">(required)</span>
           </label>
           <input
             type="text"
@@ -289,7 +355,49 @@ const SubmitArticlePage = () => {
           />
         </div>
 
-        <button type="submit">Submit</button>
+        {/* practices multi‐select */}
+        <div>
+          <label className="block font-medium mb-1">Practices</label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {allPractices.map((p) => (
+              <label key={p._id} className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  checked={selectedPractices.includes(p._id)}
+                  onChange={() => togglePractice(p._id)}
+                  className="h-4 w-4"
+                />
+                <span className="text-gray-700">{p.name}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        {/* claims multi‐select */}
+        <div>
+          <label className="block font-medium mb-1">Claims</label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {allClaims.map((c) => (
+              <label key={c._id} className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  checked={selectedClaims.includes(c._id)}
+                  onChange={() => toggleClaim(c._id)}
+                  className="h-4 w-4"
+                />
+                <span className="text-gray-700">{c.name}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        {/* submit button */}
+        <button
+          type="submit"
+          className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+        >
+          Submit
+        </button>
       </form>
     </div>
   );
