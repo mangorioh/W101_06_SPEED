@@ -10,6 +10,8 @@ import { ArticleSchema } from './articles/article.schema';
 import { ModerationModule } from './moderation/moderation.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
+import { PracticeModule } from './practices/practice.module';
+import { ClaimModule } from './claims/claim.module';
 
 @Module({
   imports: [
@@ -30,6 +32,8 @@ import { AuthModule } from './auth/auth.module';
     ModerationModule,
     UsersModule,
     AuthModule,
+    PracticeModule,
+    ClaimModule
   ],
   controllers: [AppController],
   providers: [AppService],
