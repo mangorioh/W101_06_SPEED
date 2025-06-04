@@ -37,7 +37,7 @@ const defaultVisibleColumns = {
   rating: true,
   moderatedBy: true,
   practice: true,
-  claim: true
+  claim: true,
 };
 
 export default function ArticlesPage() {
@@ -52,14 +52,18 @@ export default function ArticlesPage() {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState("");
+  const [ratingSummaries, setRatingSummaries] = useState<Record<string, { averageRating: number; ratingCount: number }>>({});
+  const [userRatings, setUserRatings] = useState<Record<string, number | null>>({});
 
-  const [visibleColumns, setVisibleColumns] = useState<Record<string, boolean>>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('columnVisibility');
-      return saved ? JSON.parse(saved) : defaultVisibleColumns;
+  const [visibleColumns, setVisibleColumns] = useState<Record<string, boolean>>(
+    () => {
+      if (typeof window !== "undefined") {
+        const saved = localStorage.getItem("columnVisibility");
+        return saved ? JSON.parse(saved) : defaultVisibleColumns;
+      }
+      return defaultVisibleColumns;
     }
-    return defaultVisibleColumns;
-  });
+  );
 
   const [savedQueries, setSavedQueries] = useState<Record<string, string>>({});
   const [newQueryName, setNewQueryName] = useState<string>("");
@@ -88,12 +92,21 @@ export default function ArticlesPage() {
   const loadSavedQuery = (query: string) => {
     setSearchQuery(query);
   };
+  const getJwt = () => {
+    return typeof window !== "undefined" ? localStorage.getItem("token") : null;
+  };
 
   useEffect(() => {
     const fetchArticles = async () => {
       try {
-        const url = `http://localhost:3000/articles${searchQuery ? `?search=${encodeURIComponent(searchQuery)}` : ""}`;
-        const response = await fetch(url);
+        const url =
+          `${process.env.NEXT_PUBLIC_SITE_URL}/articles` +
+          (searchQuery ? `?search=${encodeURIComponent(searchQuery)}` : "");
+        const response = await fetch(url, {
+          headers: {
+            Authorization: `Bearer ${getJwt() ?? ""}`,
+          },
+        });
 
         if (!response.ok) {
           const errorText = await response.text();
@@ -105,26 +118,31 @@ export default function ArticlesPage() {
         const processedData = data.map((article: any) => {
           const formatDate = (dateString: string | { $date: string }) => {
             try {
-              const dateValue = typeof dateString === 'string' ? dateString : dateString?.$date;
+              const dateValue =
+                typeof dateString === "string" ? dateString : dateString?.$date;
               return new Date(dateValue).getFullYear().toString();
             } catch {
-              return 'N/A';
+              return "N/A";
             }
           };
 
-          const authorDisplay = Array.isArray(article.author) && article.author.length > 0
-            ? article.author.join(', ')
-            : article.author || 'Anonymous';
+          const authorDisplay =
+            Array.isArray(article.author) && article.author.length > 0
+              ? article.author.join(", ")
+              : article.author || "Anonymous";
 
-          const claimArray = typeof article.claim === 'string'
-            ? article.claim.split(',').map((id: string) => id.trim())
-            : Array.isArray(article.claim) ? article.claim : [];
+          const claimArray =
+            typeof article.claim === "string"
+              ? article.claim.split(",").map((id: string) => id.trim())
+              : Array.isArray(article.claim)
+              ? article.claim
+              : [];
 
-          const practiceArray = Array.isArray(article.practice)
+          const practiceArray: string[] = Array.isArray(article.practice)
             ? article.practice
-            : (typeof article.practice === 'string' && article.practice !== 'N/A'
-                ? article.practice.split(',').map(p => p.trim())
-                : []);
+            : typeof article.practice === "string" && article.practice !== "N/A"
+            ? article.practice.split(",").map((p: string) => p.trim())
+            : [];
 
           return {
             ...article,
@@ -132,18 +150,66 @@ export default function ArticlesPage() {
             updated_date: formatDate(article.updated_date),
             moderated_date: formatDate(article.moderated_date),
             author: authorDisplay,
-            status: article.status || 'Pending',
-            publisher: article.publisher || 'Unknown Publisher',
-            rating: article.rating ?? 'Not rated',
-            claim: claimArray.join(', '),
+            status: article.status || "Pending",
+            publisher: article.publisher || "Unknown Publisher",
+            claim: claimArray.join(", "),
             practice: practiceArray,
           };
         });
 
         setArticles(processedData);
+        
+        // Fetch ratings for all articles
+        const newSummaries: Record<string, { averageRating: number; ratingCount: number }> = {};
+        const newUserRatings: Record<string, number | null> = {};
+        
+        await Promise.all(processedData.map(async (article: ArticlesInterface) => {
+          try {
+            // Fetch rating summary
+            const summaryResponse = await fetch(
+              `${process.env.NEXT_PUBLIC_SITE_URL}/articles/${article._id}/rating/summary`
+            );
+            if (summaryResponse.ok) {
+              const summary = await summaryResponse.json();
+              newSummaries[article._id] = summary;
+            }
+
+            // Fetch user's rating if logged in
+            const jwt = getJwt();
+            if (jwt) {
+              const userRatingResponse = await fetch(
+                `${process.env.NEXT_PUBLIC_SITE_URL}/articles/${article._id}/rating`,
+                {
+                  headers: {
+                    Authorization: `Bearer ${jwt}`,
+                  },
+                }
+              );
+              if (userRatingResponse.ok) {
+                if (userRatingResponse.status === 204) {
+                  // No rating yet
+                  newUserRatings[article._id] = null;
+                } else {
+                  const text = await userRatingResponse.text();
+                  if (!text) {
+                    newUserRatings[article._id] = null;
+                  } else {
+                    const rating = JSON.parse(text);
+                    newUserRatings[article._id] = rating;
+                  }
+                }
+              }
+            }
+          } catch (error) {
+            console.error(`Error fetching ratings for article ${article._id}:`, error);
+          }
+        }));
+
+        setRatingSummaries(newSummaries);
+        setUserRatings(newUserRatings);
         setFetchError("");
       } catch (error) {
-        console.error('Error fetching articles:', error);
+        console.error("Error fetching articles:", error);
         setFetchError("Failed to load articles. Please try again later.");
       } finally {
         setLoading(false);
@@ -153,34 +219,37 @@ export default function ArticlesPage() {
   }, [searchQuery]);
 
   const toggleColumnVisibility = (column: string) => {
-    setVisibleColumns(prev => {
-      const newVisibility = {...prev, [column]: !prev[column]};
-      localStorage.setItem('columnVisibility', JSON.stringify(newVisibility));
+    setVisibleColumns((prev) => {
+      const newVisibility = { ...prev, [column]: !prev[column] };
+      localStorage.setItem("columnVisibility", JSON.stringify(newVisibility));
       return newVisibility;
     });
   };
 
   const statusOptions = Array.from(
-    new Set(articles.map(a => a.status).filter(s => s && s !== 'Unknown'))
+    new Set(articles.map((a) => a.status).filter((s) => s && s !== "Unknown"))
   );
 
   const practiceOptions = Array.from(
-    new Set(articles.flatMap(a => a.practice || []).filter(p => p && p !== 'N/A'))
+    new Set(
+      articles.flatMap((a) => a.practice || []).filter((p) => p && p !== "N/A")
+    )
   );
 
   const claimOptions = useMemo(() => {
     if (selectedPractice === "All") return [];
     const claimSet = new Set<string>();
-    articles.forEach(a => {
+    articles.forEach((a) => {
       if (a.practice?.includes(selectedPractice) && a.claim) {
-        a.claim.split(',').forEach(c => claimSet.add(c.trim()));
+        a.claim.split(",").forEach((c) => claimSet.add(c.trim()));
       }
     });
     return Array.from(claimSet);
   }, [articles, selectedPractice]);
 
   const validateYears = (start: string, end: string) => {
-    const s = parseInt(start), e = parseInt(end);
+    const s = parseInt(start),
+      e = parseInt(end);
     if (start && end && s > e) {
       setErrorMessage("End year cannot be earlier than start year");
       return false;
@@ -200,18 +269,25 @@ export default function ArticlesPage() {
   useEffect(() => setSelectedClaim("All"), [selectedPractice]);
 
   const filteredData = articles
-    .filter(a => {
+    .filter((a) => {
       const year = parseInt(a.published_date) || 0;
       return (
         (selectedStatus === "All" || a.status === selectedStatus) &&
-        (selectedPractice === "All" || a.practice?.includes(selectedPractice)) &&
-        (selectedClaim === "All" || a.claim?.split(',').map(c => c.trim()).includes(selectedClaim)) &&
-        (!startYear || !endYear || (year >= parseInt(startYear) && year <= parseInt(endYear))) &&
-        (
-          a.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (Array.isArray(a.author) ? a.author.join(", ") : a.author || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-          a.description?.toLowerCase().includes(searchQuery.toLowerCase())
-        )
+        (selectedPractice === "All" ||
+          a.practice?.includes(selectedPractice)) &&
+        (selectedClaim === "All" ||
+          a.claim
+            ?.split(",")
+            .map((c) => c.trim())
+            .includes(selectedClaim)) &&
+        (!startYear ||
+          !endYear ||
+          (year >= parseInt(startYear) && year <= parseInt(endYear))) &&
+        (a.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (Array.isArray(a.author) ? a.author.join(", ") : a.author || "")
+            .toLowerCase()
+            .includes(searchQuery.toLowerCase()) ||
+          a.description?.toLowerCase().includes(searchQuery.toLowerCase()))
       );
     })
     .sort((a, b) =>
@@ -227,11 +303,51 @@ export default function ArticlesPage() {
     { key: "publisher", label: "Publisher" },
     { key: "status", label: "Status" },
     { key: "journal", label: "Journal" },
-    { key: "rating", label: "Rating" },
+    { key: "rating_ui", label: "Rating" },
     { key: "moderatedBy", label: "Moderated By" },
     { key: "practice", label: "Practice" },
     { key: "claim", label: "Claims" },
   ];
+
+  const handleRatingChange = async (articleId: string, value: number) => {
+    const jwt = getJwt();
+    if (!jwt) return;
+
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_SITE_URL}/articles/${articleId}/rating`,
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${jwt}`,
+          },
+          body: JSON.stringify({ value }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      // Update the states
+      setUserRatings(prev => ({
+        ...prev,
+        [articleId]: value,
+      }));
+      setRatingSummaries(prev => ({
+        ...prev,
+        [articleId]: {
+          averageRating: result.averageRating,
+          ratingCount: result.ratingCount,
+        },
+      }));
+    } catch (error) {
+      console.error('Error updating rating:', error);
+    }
+  };
 
   return (
     <div className="p-4 max-w-screen-xl mx-auto">
@@ -250,7 +366,9 @@ export default function ArticlesPage() {
         >
           <option value="">-- Load Saved Search --</option>
           {Object.entries(savedQueries).map(([name]) => (
-            <option key={name} value={name}>{name}</option>
+            <option key={name} value={name}>
+              {name}
+            </option>
           ))}
         </select>
 
@@ -265,25 +383,60 @@ export default function ArticlesPage() {
 
       {/* Filters and controls */}
       <div className="flex flex-wrap gap-4 mb-4">
-        <select value={selectedStatus} onChange={(e) => setSelectedStatus(e.target.value)} className="border rounded px-2 py-1">
+        <select
+          value={selectedStatus}
+          onChange={(e) => setSelectedStatus(e.target.value)}
+          className="border rounded px-2 py-1"
+        >
           <option value="All">All Statuses</option>
-          {statusOptions.map((s, i) => <option key={i}>{s}</option>)}
+          {statusOptions.map((s, i) => (
+            <option key={i}>{s}</option>
+          ))}
         </select>
 
-        <select value={selectedPractice} onChange={(e) => setSelectedPractice(e.target.value)} className="border rounded px-2 py-1">
+        <select
+          value={selectedPractice}
+          onChange={(e) => setSelectedPractice(e.target.value)}
+          className="border rounded px-2 py-1"
+        >
           <option value="All">All Practices</option>
-          {practiceOptions.map((p, i) => <option key={i}>{p}</option>)}
+          {practiceOptions.map((p, i) => (
+            <option key={i}>{p}</option>
+          ))}
         </select>
 
-        <select value={selectedClaim} onChange={(e) => setSelectedClaim(e.target.value)} disabled={selectedPractice === "All"} className="border rounded px-2 py-1">
+        <select
+          value={selectedClaim}
+          onChange={(e) => setSelectedClaim(e.target.value)}
+          disabled={selectedPractice === "All"}
+          className="border rounded px-2 py-1"
+        >
           <option value="All">All Claims</option>
-          {claimOptions.map((c, i) => <option key={i}>{c}</option>)}
+          {claimOptions.map((c, i) => (
+            <option key={i}>{c}</option>
+          ))}
         </select>
 
-        <input type="number" placeholder="Start Year" value={startYear} onChange={(e) => setStartYear(e.target.value)} className="border rounded px-2 py-1 w-24" />
-        <input type="number" placeholder="End Year" value={endYear} onChange={(e) => setEndYear(e.target.value)} className="border rounded px-2 py-1 w-24" />
+        <input
+          type="number"
+          placeholder="Start Year"
+          value={startYear}
+          onChange={(e) => setStartYear(e.target.value)}
+          className="border rounded px-2 py-1 w-24"
+        />
+        <input
+          type="number"
+          placeholder="End Year"
+          value={endYear}
+          onChange={(e) => setEndYear(e.target.value)}
+          className="border rounded px-2 py-1 w-24"
+        />
 
-        <select value={sortOrder} onChange={(e) => setSortOrder(e.target.value as "asc" | "desc")} className="border rounded px-2 py-1">
+        <select
+          value={sortOrder}
+          onChange={(e) => setSortOrder(e.target.value as "asc" | "desc")}
+          className="border rounded px-2 py-1"
+        >
           <option value="asc">Oldest First</option>
           <option value="desc">Newest First</option>
         </select>
@@ -301,7 +454,34 @@ export default function ArticlesPage() {
       ) : (
         <SortableTable
           headers={headers}
-          data={filteredData.map(a => ({ ...a, practice: a.practice?.join(", ") || "N/A" }))}
+          data={filteredData.map((a) => ({
+            ...a,
+            practice: a.practice?.join(", ") || "N/A",
+            rating_ui: (
+              <div className="flex items-center space-x-4">
+                <select
+                  value={userRatings[a._id] || ""}
+                  onChange={(e) => {
+                    const val = e.target.value ? Number(e.target.value) : null;
+                    if (val) handleRatingChange(a._id, val);
+                  }}
+                  className="border rounded px-2 py-1"
+                >
+                  <option value="">Rate this article</option>
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <option key={n} value={n}>
+                      {n}
+                    </option>
+                  ))}
+                </select>
+                <span>
+                  {ratingSummaries[a._id] 
+                    ? `${ratingSummaries[a._id].averageRating.toFixed(1)} (${ratingSummaries[a._id].ratingCount} vote${ratingSummaries[a._id].ratingCount === 1 ? '' : 's'})`
+                    : 'No ratings'}
+                </span>
+              </div>
+            ),
+          }))}
           visibleColumns={visibleColumns}
         />
       )}
@@ -318,8 +498,18 @@ export default function ArticlesPage() {
               className="w-full border rounded px-3 py-2 mb-4"
             />
             <div className="flex justify-end gap-2">
-              <button onClick={() => setShowSavePrompt(false)} className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">Cancel</button>
-              <button onClick={confirmSaveQuery} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Save</button>
+              <button
+                onClick={() => setShowSavePrompt(false)}
+                className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmSaveQuery}
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              >
+                Save
+              </button>
             </div>
           </div>
         </div>
