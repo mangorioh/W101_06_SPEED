@@ -556,6 +556,7 @@ export default function ArticlesPage() {
               </div>
             ),
           }))}
+          visibleColumns={visibleColumns}
         />
       )}
     </div>
