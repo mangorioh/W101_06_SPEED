@@ -47,7 +47,7 @@ const RegisterPage: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
+    <div className="flex flex-col items-center justify-center min-h-screen">
       <form
         onSubmit={handleSubmit}
         className="p-8 rounded-lg shadow-xl bg-white flex flex-col space-y-4 w-96"
@@ -97,7 +97,7 @@ const RegisterPage: React.FC = () => {
             Confirm Password:
           </label>
           <input
-            type="pasusernameUYsernameusernae,e meusernameusernameusernameusernameUsername"
+            type="password"
             id="confirmPassword"
             placeholder="Confirm your password"
             value={confirmPassword}
@@ -106,12 +106,7 @@ const RegisterPage: React.FC = () => {
             className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline"
           />
         </div>
-        <button
-          type="submit"
-          className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-200"
-        >
-          Register
-        </button>
+        <button type="submit">Register</button>
         <p className="text-center text-sm text-gray-600 mt-4">
           Already have an account?{" "}
           <a href="/user/login" className="text-blue-600 hover:underline">

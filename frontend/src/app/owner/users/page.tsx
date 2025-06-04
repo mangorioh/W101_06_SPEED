@@ -130,14 +130,12 @@ export default function OwnerUsersPage() {
               </td>
               <td className="border px-2 py-1 space-x-2">
                 <button
-                  className="bg-yellow-500 text-white px-2 py-1 rounded text-xs"
                   disabled={updating === user._id}
                   onClick={() => handleInvalidatePassword(user._id)}
                 >
                   Invalidate Password
                 </button>
                 <button
-                  className="bg-red-600 text-white px-2 py-1 rounded text-xs"
                   disabled={updating === user._id}
                   onClick={() => handleDelete(user._id)}
                 >

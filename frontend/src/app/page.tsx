@@ -83,7 +83,7 @@ export default function HomePage() {
     return <div className="container">No article to display</div>;
 
   return (
-    <div className="container">
+    <div className="container mx-auto">
       <div className="text-center mb-8 pt-8 max-w-4xl mx-auto">
         <p className="text-3xl font-bold">
           Welcome to the Software Practice Empirical Evidence Database
@@ -127,7 +127,7 @@ export default function HomePage() {
       <div className="text-center py-14">
         <a
           href="/articles"
-          className="inline-block min-w-[300px] mt-6 px-6 py-3 text-white bg-blue-600 hover:bg-blue-700 rounded-lg text-lg font-semibold transition duration-200"
+          className="inline-block min-w-[300px] mt-6 px-6 py-3 text-white bg-blue-800 hover:bg-blue-700 rounded-lg text-lg font-semibold transition duration-200"
         >
           Start Browsing
         </a>

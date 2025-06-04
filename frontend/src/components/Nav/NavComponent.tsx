@@ -25,9 +25,7 @@ const NavComponent: React.FC<NavComponentProps> = ({
           {label}
         </Link>
       ) : (
-        <button className="block py-1 px-4 hover:bg-blue-800/60 bg-blue-800 rounded-md">
-          {label}
-        </button>
+        <button className="block py-1 px-4 rounded-md">{label}</button>
       )}
       {hasChildren && (
         <div

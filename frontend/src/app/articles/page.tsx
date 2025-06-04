@@ -316,20 +316,21 @@ export default function ArticlesPage() {
   }
 
   return (
-    <div className="container">
+    <div className="container mx-auto">
       {/* Filters Section */}
-      <div className="filters">
+      <div className="filters flex flex-wrap gap-4 items-end bg-slate-100 p-4 rounded-lg shadow mb-6">
         <input
           type="text"
           placeholder="Search articles..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="search-input"
+          className="search-input px-3 py-2 rounded border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white"
         />
 
         <select
           value={selectedStatus}
           onChange={(e) => setSelectedStatus(e.target.value)}
+          className="px-3 py-2 rounded border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white"
         >
           <option value="All">All Statuses</option>
           {statusOptions.map((status) => (
@@ -339,7 +340,7 @@ export default function ArticlesPage() {
           ))}
         </select>
 
-        <div className="year-inputs">
+        <div className="year-inputs flex gap-2">
           <input
             type="number"
             placeholder="Start year"
@@ -347,6 +348,7 @@ export default function ArticlesPage() {
             onChange={(e) => setStartYear(e.target.value)}
             min="1900"
             max={new Date().getFullYear()}
+            className="px-3 py-2 rounded border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white w-28"
           />
           <input
             type="number"
@@ -355,12 +357,14 @@ export default function ArticlesPage() {
             onChange={(e) => setEndYear(e.target.value)}
             min="1900"
             max={new Date().getFullYear()}
+            className="px-3 py-2 rounded border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white w-28"
           />
         </div>
 
         <select
           value={sortOrder}
           onChange={(e) => setSortOrder(e.target.value as "asc" | "desc")}
+          className="px-3 py-2 rounded border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white"
         >
           <option value="asc">Oldest First</option>
           <option value="desc">Newest First</option>

@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 
 interface Article {
   _id: string;
@@ -15,12 +15,14 @@ const ModerateArticlesPage = () => {
   const [articles, setArticles] = useState<Article[]>([]);
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [rejectingId, setRejectingId] = useState<string | null>(null);
-  const [rejectReason, setRejectReason] = useState<string>('');
+  const [rejectReason, setRejectReason] = useState<string>("");
 
   const fetchArticles = async () => {
-    const res = await fetch('http://localhost:3000/articles');
+    const res = await fetch("http://localhost:3000/articles");
     const data = await res.json();
-    const pending = data.filter((article: Article) => article.status === 'pending');
+    const pending = data.filter(
+      (article: Article) => article.status === "pending"
+    );
     setArticles(pending);
   };
 
@@ -31,33 +33,33 @@ const ModerateArticlesPage = () => {
   const handleApprove = async (id: string) => {
     setLoadingId(id);
     await fetch(`http://localhost:3000/articles/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: 'approved' }),
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: "approved" }),
     });
     setLoadingId(null);
     fetchArticles();
   };
 
   const handleRejectSubmit = async (id: string) => {
-  if (!rejectReason.trim()) return;
+    if (!rejectReason.trim()) return;
 
-  setLoadingId(id);
+    setLoadingId(id);
 
-  await fetch(`http://localhost:3000/moderation/${id}/reject`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      rejectionReason: rejectReason,
-      moderator: 'Test - He Who Moderates',
-    }),
-  });
+    await fetch(`http://localhost:3000/moderation/${id}/reject`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        rejectionReason: rejectReason,
+        moderator: "Test - He Who Moderates",
+      }),
+    });
 
-  setLoadingId(null);
-  setRejectingId(null);
-  setRejectReason('');
-  fetchArticles(); // Refresh list
-};
+    setLoadingId(null);
+    setRejectingId(null);
+    setRejectReason("");
+    fetchArticles(); // Refresh list
+  };
 
   return (
     <div className="max-w-3xl mx-auto p-6">
@@ -79,14 +81,12 @@ const ModerateArticlesPage = () => {
 
             <div className="flex gap-4 mt-4">
               <button
-                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
                 onClick={() => handleApprove(article._id)}
                 disabled={loadingId === article._id}
               >
-                {loadingId === article._id ? 'Approving...' : 'Approve'}
+                {loadingId === article._id ? "Approving..." : "Approve"}
               </button>
               <button
-                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded"
                 onClick={() =>
                   setRejectingId(
                     rejectingId === article._id ? null : article._id
@@ -94,7 +94,7 @@ const ModerateArticlesPage = () => {
                 }
                 disabled={loadingId === article._id}
               >
-                {loadingId === article._id ? 'Processing...' : 'Reject'}
+                {loadingId === article._id ? "Processing..." : "Reject"}
               </button>
             </div>
 
@@ -109,17 +109,13 @@ const ModerateArticlesPage = () => {
                   rows={3}
                 />
                 <div className="flex gap-2">
-                  <button
-                    className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded"
-                    onClick={() => handleRejectSubmit(article._id)}
-                  >
+                  <button onClick={() => handleRejectSubmit(article._id)}>
                     Submit Rejection
                   </button>
                   <button
-                    className="bg-gray-300 hover:bg-gray-400 px-4 py-2 rounded"
                     onClick={() => {
                       setRejectingId(null);
-                      setRejectReason('');
+                      setRejectReason("");
                     }}
                   >
                     Cancel
