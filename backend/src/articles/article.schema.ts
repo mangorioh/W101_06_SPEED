@@ -59,11 +59,28 @@ export class Article {
   @Prop()
   reason_for_decision: string;
 
-  @Prop()
-  rating: number;
+  @Prop({ type: Number, default: 0 })
+  ratingSum: number;
+
+  @Prop({ type: Number, default: 0 })
+  ratingCount: number;
 
   @Prop()
   practice: string[];
+
+  @Prop()
+  claim?: string[]; 
+
+  @Prop()
+  resultOfEvidence: string;
+
+  @Prop()
+  typeOfResearch: string;
+
+  @Prop([String])
+  typeOfParticipant: string[];
+
+  
 }
 
 export const ArticleSchema = SchemaFactory.createForClass(Article);

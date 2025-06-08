@@ -1,148 +1,28 @@
-// Kirby Pascua | 22172362
-// mongodb connection articles
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useTableColumns } from "@/hooks/useTableColumns";
+import { SearchBar } from "@/components/Search/SearchBar";
+import { Filters } from "@/components/Filters/Filters";
+import { Rating } from "@/components/Rating/Rating";
 import SortableTable from "@/components/Table/SortableTable";
+import { useArticles } from "@/hooks/useArticles";
+import { useFilters } from "@/hooks/useFilters";
+import { useRatings } from "@/hooks/useRatings";
+import { usePracticesAndClaims } from "@/hooks/usePracticesAndClaims";
 
-// need to redo with proper fields later 
-
-interface ArticlesInterface {
-  _id: string;
-  title: string;
-  author: string | string[];
-  published_date: string;
-  description?: string;
-  publisher?: string;
-  status?: string;
-  isbn?: string;
-  moderatedBy?: string;
-  rating?: number;
-  reason_for_decision?: string;
-  volume?: string;
-  number?: number;
-  journal?: string;
-  updated_date?: string;
-  moderated_date?: string;
-}
-export default function ArticlesPage() {
-  const [articles, setArticles] = useState<ArticlesInterface[]>([]);
-  const [selectedStatus, setSelectedStatus] = useState<string>("All");
-  const [startYear, setStartYear] = useState<string>("");
-  const [endYear, setEndYear] = useState<string>("");
-  const [searchQuery, setSearchQuery] = useState<string>("");
-  const [errorMessage, setErrorMessage] = useState<string>("");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
-  const [loading, setLoading] = useState(true);
-  const [fetchError, setFetchError] = useState("");
-
-useEffect(() => {
-  const fetchArticles = async () => {
-    try {
-      const url = `http://localhost:3000/articles${searchQuery ? `?search=${encodeURIComponent(searchQuery)}` : ""}`;
-      console.log('Fetching from:', url);
-      
-      const response = await fetch(url);
-      console.log('Response status:', response.status);
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Error response:', errorText);
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      console.log('Received data:', data);
-
-const processedData = data.map((article: any) => {
-
-  const formatDate = (dateString: string | { $date: string }) => {
-    try {
-      const dateValue = typeof dateString === 'string' ? dateString : dateString?.$date;
-      return new Date(dateValue).getFullYear().toString();
-    } catch {
-      return 'N/A';
-    }
-  };
-
-  const authorDisplay = Array.isArray(article.author) && article.author.length > 0
-    ? article.author.join(', ')
-    : article.author || 'Anonymous';
-
-  return {
-    ...article,
-    published_date: formatDate(article.published_date),
-    updated_date: formatDate(article.updated_date),
-    moderated_date: formatDate(article.moderated_date),
-    author: authorDisplay,
-    status: article.status || 'Pending',
-    publisher: article.publisher || 'Unknown Publisher',
-    rating: article.rating ?? 'Not rated'
-  };
-});
-      
-      setArticles(processedData);
-      setFetchError("");
-    } catch (error) {
-      console.error('Full error details:', error);
-      setFetchError("Failed to load articles. Please try again later.");
-    } finally {
-      setLoading(false); 
-    }
-  };
-  fetchArticles();
-}, [searchQuery]);
-
-const statusOptions = Array.from(
-  new Set(
-    articles
-      .map(article => article.status)
-      .filter(status => status && status !== 'Unknown')
-  )
-);
-
-  const validateYears = (start: string, end: string): boolean => {
-    const startNum = parseInt(start);
-    const endNum = parseInt(end);
-    
-    if (start && end && startNum > endNum) {
-      setErrorMessage("End year cannot be earlier than start year");
-      return false;
-    }
-    
-    if (startNum < 1900 || endNum > new Date().getFullYear()) {
-      setErrorMessage("Years must be between 1900 and current year");
-      return false;
-    }
-    
-    setErrorMessage("");
-    return true;
-  };
-
-const filteredData = articles
-  .filter(article => {
-    const matchesStatus = selectedStatus === "All" || article.status === selectedStatus;
-    const pubYear = article.published_date ? parseInt(article.published_date) : 0;
-    
-    let matchesYear = true;
-    if (startYear && endYear) {
-      matchesYear = pubYear >= parseInt(startYear) && pubYear <= parseInt(endYear);
-    }
-
-    const authorString = Array.isArray(article.author) 
-      ? article.author.join(", ") 
-      : article.author || "Unknown Author";
-      
-    const matchesSearch = article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      authorString.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (article.description && article.description.toLowerCase().includes(searchQuery.toLowerCase()));
-
-    return matchesStatus && matchesYear && matchesSearch;
-  })
-  .sort((a, b) => sortOrder === "asc" 
-    ? (parseInt(a.published_date) || 0) - (parseInt(b.published_date) || 0)
-    : (parseInt(b.published_date) || 0) - (parseInt(a.published_date) || 0)
-  );
+const defaultVisibleColumns = {
+  title: true,
+  author: true,
+  published_date: true,
+  publisher: true,
+  status: true,
+  journal: true,
+  rating: true,
+  moderatedBy: true,
+  practice: true,
+  claim: true,
+};
 
 const headers = [
   { key: "title", label: "Title" },
@@ -151,79 +31,110 @@ const headers = [
   { key: "publisher", label: "Publisher" },
   { key: "status", label: "Status" },
   { key: "journal", label: "Journal" },
-  { key: "rating", label: "Rating" },
-  { key: "moderatedBy", label: "Moderated By" }
+  { key: "rating_ui", label: "Rating" },
+  { key: "moderatedBy", label: "Moderated By" },
+  { key: "practice", label: "Practice" },
+  { key: "claim", label: "Claims" },
 ];
 
-  if (loading) {
-    return <div className="container">Loading articles...</div>;
+export default function ArticlesPage() {
+  const [searchQuery, setSearchQuery] = useState("");
+  const { articles, loading, error: fetchError } = useArticles(searchQuery);
+  const { visibleColumns, toggleColumnVisibility } = useTableColumns(
+    defaultVisibleColumns
+  );
+  const { ratingSummaries, userRatings, handleRatingChange } = useRatings(
+    articles.map((article) => article._id)
+  );
+
+  const {
+    practices,
+    claims,
+    loading: metadataLoading,
+  } = usePracticesAndClaims();
+
+  const { filters, options, errorMessage, filteredArticles } = useFilters({
+    articles,
+    practices,
+    claims,
+  });
+
+  const lowerQuery = searchQuery.trim().toLowerCase();
+  const displayedArticles = lowerQuery
+    ? filteredArticles.filter((article) => {
+        // Title match (assuming title is a string)
+        const titleMatch = typeof article.title === "string"
+          ? article.title.toLowerCase().includes(lowerQuery)
+          : false;
+
+        // Author field might be a string or array of strings
+        let authorField = "";
+        if (typeof article.author === "string") {
+          authorField = article.author;
+        } else if (Array.isArray(article.author)) {
+          authorField = article.author.join(" ");
+        }
+        const authorMatch = authorField
+          .toLowerCase()
+          .includes(lowerQuery);
+
+        return titleMatch || authorMatch;
+      })
+    : filteredArticles;
+
+  if (loading || metadataLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="text-lg">Loading...</div>
+      </div>
+    );
   }
 
   if (fetchError) {
-    return <div className="container error-message">{fetchError}</div>;
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="text-red-600 text-lg">{fetchError}</div>
+      </div>
+    );
   }
 
   return (
-    <div className="container">
-      <div className="filters">
-        <input
-          type="text"
-          placeholder="Search articles..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="search-input"
+    <div className="p-4 max-w-screen-xl mx-auto">
+      <SearchBar searchQuery={searchQuery} onSearchChange={setSearchQuery} />
+
+      <Filters
+        filters={filters}
+        options={options}
+        errorMessage={errorMessage}
+        visibleColumns={visibleColumns}
+        onToggleColumn={toggleColumnVisibility}
+        headers={headers}
+      />
+
+      {displayedArticles.length === 0 ? (
+        <p>No results found.</p>
+      ) : (
+        <SortableTable
+          headers={headers}
+          data={displayedArticles.map((article) => ({
+            ...article,
+            practice: Array.isArray(article.practice)
+              ? article.practice.join(", ")
+              : "N/A",
+            claim: Array.isArray(article.claim)
+              ? article.claim.join(", ")
+              : "N/A",
+            rating_ui: (
+              <Rating
+                articleId={article._id}
+                userRating={userRatings[article._id]}
+                ratingSummary={ratingSummaries[article._id]}
+                onRatingChange={handleRatingChange}
+              />
+            ),
+          }))}
+          visibleColumns={visibleColumns}
         />
-
-        <select 
-          value={selectedStatus} 
-          onChange={(e) => setSelectedStatus(e.target.value)}
-        >
-          <option value="All">All Statuses</option>
-          {statusOptions.map(status => (
-            <option key={status} value={status}>{status}</option>
-          ))}
-        </select>
-
-        <div className="year-inputs">
-          <input
-            type="number"
-            placeholder="Start year"
-            value={startYear}
-            onChange={(e) => setStartYear(e.target.value)}
-            min="1900"
-            max={new Date().getFullYear()}
-          />
-          <input
-            type="number"
-            placeholder="End year"
-            value={endYear}
-            onChange={(e) => setEndYear(e.target.value)}
-            min="1900"
-            max={new Date().getFullYear()}
-          />
-        </div>
-
-        <select
-          value={sortOrder}
-          onChange={(e) => setSortOrder(e.target.value as "asc" | "desc")}
-        >
-          <option value="asc">Oldest First</option>
-          <option value="desc">Newest First</option>
-        </select>
-      </div>
-
-      {errorMessage && <div className="error-message">{errorMessage}</div>}
-      
-      {filteredData.length === 0 && searchQuery && (
-        <div className="no-results">No articles found matching "{searchQuery}"</div>
-      )}
-
-      {filteredData.length === 0 && !searchQuery && (
-        <div className="no-results">No articles found</div>
-      )}
-
-      {filteredData.length > 0 && (
-        <SortableTable headers={headers} data={filteredData} />
       )}
     </div>
   );

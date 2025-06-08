@@ -1,9 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject, forwardRef } from '@nestjs/common';
 import { ArticleService } from '../articles/article.service';
 
 @Injectable()
 export class ModerationService {
-  constructor(private readonly articleService: ArticleService) {}
+  constructor(
+    @Inject(forwardRef(() => ArticleService))
+    private readonly articleService: ArticleService
+  ) { }
 
   //Get all articles with status 'pending'
   async getPendingArticles() {
@@ -58,5 +61,10 @@ export class ModerationService {
     return this.articleService.update(id, {
       status: 'removed',
     });
+  }
+
+  // Get all articles where the submitter matches a given string
+  async getArticlesBySubmitter(submitter: string) {
+    return this.articleService.findBySubmitter(submitter);
   }
 }

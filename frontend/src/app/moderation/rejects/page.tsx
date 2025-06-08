@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 
 interface Article {
   _id: string;
@@ -22,12 +22,15 @@ const RejectArticlePage = () => {
   useEffect(() => {
     const fetchArticles = async () => {
       try {
-        const res = await fetch('http://localhost:3000/moderation/rejects');
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_SITE_URL}/moderation/rejects`
+        );
         const data = await res.json();
-        console.log('Fetched articles:', data);
-        setArticles(data);
+        console.log("Fetched articles:", data);
+        setArticles(Array.isArray(data) ? data : []);
       } catch (error) {
-        console.error('Error fetching articles:', error);
+        console.error("Error fetching articles:", error);
+        setArticles([]);
       } finally {
         setLoading(false);
       }
@@ -47,11 +50,18 @@ const RejectArticlePage = () => {
             <p>No articles to review.</p>
           ) : (
             articles.map((article) => (
-              <div key={article._id} className="border rounded p-4 shadow-sm bg-white">
+              <div
+                key={article._id}
+                className="border rounded p-4 shadow-sm bg-white"
+              >
                 <h2 className="text-xl font-semibold">{article.title}</h2>
                 <p className="text-gray-700 mb-2">{article.author}</p>
-                <p className="text-sm text-gray-500">Submitted by: {article.journal}</p>
-                <p className="text-sm text-gray-500">Rejected by moderator: {article.moderatedBy}</p>
+                <p className="text-sm text-gray-500">
+                  Submitted by: {article.journal}
+                </p>
+                <p className="text-sm text-gray-500">
+                  Rejected by moderator: {article.moderatedBy}
+                </p>
               </div>
             ))
           )}
@@ -62,7 +72,3 @@ const RejectArticlePage = () => {
 };
 
 export default RejectArticlePage;
-
-
-
-
